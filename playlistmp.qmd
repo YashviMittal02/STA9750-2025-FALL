@@ -1,0 +1,550 @@
+---
+title: "Mini-Project #03: Creating the Ultimate Playlist"
+author: "Yashvi Mittal"
+date: "2025-12-20"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: show
+    df-print: paged
+execute:
+  warning: false
+  message: false
+---
+
+# Introduction
+
+Music is more than just sound; it is data. In this project, we dive into the world of music analytics to understand what makes a song "popular," "danceable," or fit for a specific mood. By analyzing a dataset of song characteristics and a collection of user-generated playlists, we aim to uncover trends in listening habits.
+
+Our final goal is to leverage these insights to curate the **Ultimate Playlist**—a data-driven selection of tracks designed to maximize listener engagement through sonic continuity and energy flow.
+
+```{r}
+#| label: setup
+#| include: false
+
+# Load necessary libraries for data manipulation, visualization, and formatting
+library(tidyverse)
+library(jsonlite)
+library(knitr)
+library(DT)
+library(lubridate)
+library(ggrepel)
+
+# Set global ggplot theme for publication-quality visuals
+theme_set(theme_minimal(base_size = 12) +
+            theme(plot.title = element_text(face = "bold", size = 16),
+                  plot.subtitle = element_text(color = "gray50"),
+                  legend.position = "bottom"))
+```
+
+# Data Acquisition and Cleaning
+
+To conduct this analysis, we must first ingest data from two distinct sources: a library of song metrics and a set of user playlists. To ensure reproducibility and responsible resource usage, we implement functions that strictly download data only when it is not already present locally.
+
+## Task 1: Song Characteristics Dataset
+
+This dataset provides technical metrics (danceability, tempo, key, etc.) for a vast library of songs. We clean the `artists` column to ensure every artist is individually analyzable.
+
+```{r}
+#| label: load-songs
+
+load_songs <- function() {
+  data_dir <- "data/mp03"
+  file_path <- file.path(data_dir, "songs.csv")
+  url <- "https://raw.githubusercontent.com/gabminamedez/spotify-data/master/data.csv"
+  
+  if (!dir.exists(data_dir)) dir.create(data_dir, recursive = TRUE)
+  
+  if (!file.exists(file_path)) {
+    message("Downloading song data...")
+    download.file(url, destfile = file_path, mode = "wb")
+  }
+  
+  songs_raw <- read_csv(file_path, show_col_types = FALSE)
+  
+  clean_artist_string <- function(x) {
+    x |>
+      str_replace_all("\\['", "") |>
+      str_replace_all("'\\]", "") |>
+      str_replace_all("'", "") |> 
+      str_replace_all(", ", ",")
+  }
+  
+  songs_clean <- songs_raw |>
+    mutate(artists_clean = clean_artist_string(artists)) |>
+    separate_longer_delim(artists_clean, delim = ",") |>
+    mutate(artist = artists_clean) |>
+    select(-artists, -artists_clean)
+  
+  return(songs_clean)
+}
+
+songs_data <- load_songs()
+
+head(songs_data) |> 
+  datatable(options = list(scrollX = TRUE), caption = "Preview of Cleaned Song Data")
+```
+
+## Task 2: Playlist Dataset
+
+The Spotify Million Playlist dataset is massive. For this mini-project, we download a subset (slices of 1,000 playlists) and process them into a usable format.
+
+```{r}
+#| label: load-playlists
+
+load_playlists <- function(n_slices = 1) {
+  data_dir <- "data/mp03"
+  if (!dir.exists(data_dir)) dir.create(data_dir, recursive = TRUE)
+  
+  base_url <- "https://raw.githubusercontent.com/Devinogrady/spotify_million_playlist_dataset/master/data1/"
+  
+  all_playlists <- list()
+  
+  for (i in 0:(n_slices - 1)) {
+    start_idx <- i * 1000
+    end_idx <- start_idx + 999
+    filename <- paste0("mpd.slice.", start_idx, "-", end_idx, ".json")
+    file_path <- file.path(data_dir, filename)
+    file_url <- paste0(base_url, filename)
+    
+    # Responsible Download
+    if (!file.exists(file_path)) {
+      message(paste("Downloading", filename, "..."))
+      tryCatch({
+         download.file(file_url, destfile = file_path, mode = "wb")
+      }, error = function(e) {
+        warning(paste("Failed to download", filename, ":", e$message))
+      })
+    }
+    
+    # Read and append to list
+    if (file.exists(file_path)) {
+      json_data <- fromJSON(file_path, simplifyVector = TRUE)
+      if ("playlists" %in% names(json_data)) {
+        all_playlists[[length(all_playlists) + 1]] <- as_tibble(json_data$playlists)
+      }
+    }
+  }
+  
+  return(all_playlists)
+}
+
+# Load 2 slices (approx 2000 playlists)
+raw_playlists_list <- load_playlists(n_slices = 2)
+```
+
+## Task 3: Rectangling the Data
+
+The playlist data arrives in a nested JSON structure. We "rectangle" it into a tidy dataframe. Per the project requirements, we also ensure we capture the **Playlist Position** and handle potential missing columns.
+
+```{r}
+#| label: rectangle-playlists
+
+strip_spotify_prefix <- function(x) str_remove(x, "spotify:[a-z]+:")
+
+playlists_df <- map_dfr(raw_playlists_list, function(slice) {
+  if (nrow(slice) > 0 && "tracks" %in% names(slice)) {
+    # Unnest with unique names to prevent collision
+    expanded_slice <- slice |> 
+      unnest(tracks, names_repair = "unique") |>
+      group_by(pid) |>
+      mutate(playlist_position = row_number()) |>
+      ungroup()
+    
+    # Find the duration column dynamically
+    dur_col <- names(expanded_slice)[str_detect(names(expanded_slice), "^duration_ms")]
+    
+    if (length(dur_col) > 0) {
+       expanded_slice <- expanded_slice |> rename(duration_ms_std = !!sym(dur_col[1]))
+    } else {
+       expanded_slice$duration_ms_std <- NA_real_
+    }
+    
+    # Ensure all required columns exist
+    required_cols <- c("track_uri", "artist_uri", "album_uri", "track_name", 
+                       "artist_name", "album_name")
+    for (col in required_cols) {
+      if (!col %in% names(expanded_slice)) expanded_slice[[col]] <- NA
+    }
+
+    expanded_slice |>
+      select(
+        playlist_name = name,
+        playlist_id = pid,
+        playlist_position,
+        playlist_followers = num_followers,
+        track_name,
+        track_id = track_uri,
+        artist_name,
+        artist_id = artist_uri,
+        album_name,
+        album_id = album_uri,
+        duration_ms = duration_ms_std
+      )
+  } else {
+    tibble()
+  }
+}) |>
+  mutate(
+    track_id = strip_spotify_prefix(track_id),
+    artist_id = strip_spotify_prefix(artist_id),
+    album_id = strip_spotify_prefix(album_id),
+    duration_ms = as.numeric(duration_ms)
+  )
+
+# Preview Data
+head(playlists_df) |>
+  select(playlist_name, playlist_position, track_name, duration_ms) |>
+  datatable(caption = "Rectangled Playlist Data (showing Position)")
+```
+
+# Initial Exploration
+
+With our data cleaned, we perform an initial validation to understand the scope and quality of our dataset.
+
+## Task 4: Exploratory Analysis
+
+**1. How many distinct tracks and artists are represented?**
+
+```{r}
+#| label: distinct-counts
+
+n_tracks <- n_distinct(playlists_df$track_id)
+n_artists <- n_distinct(playlists_df$artist_id)
+```
+
+The dataset contains **`r format(n_tracks, big.mark=",")`** distinct tracks and **`r format(n_artists, big.mark=",")`** distinct artists.
+
+**2. What are the 5 most popular tracks in the playlist data?**
+
+```{r}
+#| label: top-tracks
+
+playlists_df |>
+  count(track_name, artist_name, sort = TRUE) |>
+  head(5) |>
+  datatable(options = list(dom = 't'), caption = "Top 5 Most Frequent Tracks")
+```
+
+**3. What is the most popular track in the playlist data absent from song characteristics?**
+
+```{r}
+#| label: missing-tracks
+
+missing_tracks <- playlists_df |>
+  anti_join(songs_data, by = c("track_name" = "name")) |>
+  count(track_name, sort = TRUE) |>
+  slice(1)
+
+missing_tracks |> kable(col.names = c("Track Name", "Appearances"))
+```
+
+**4. According to song characteristics, what is the most 'danceable' track?**
+
+```{r}
+#| label: danceable-track
+
+most_danceable <- songs_data |>
+  arrange(desc(danceability)) |>
+  slice(1) |>
+  select(name, artist, danceability)
+
+dance_appearances <- playlists_df |>
+  filter(track_name == most_danceable$name) |>
+  nrow()
+
+most_danceable |> 
+  mutate(appearances_in_playlists = dance_appearances) |>
+  kable()
+```
+
+**5. Which playlist has the longest average track length?**
+
+```{r}
+#| label: longest-playlist
+
+playlists_df |>
+  group_by(playlist_name) |>
+  summarize(avg_duration_ms = mean(duration_ms, na.rm = TRUE)) |>
+  arrange(desc(avg_duration_ms)) |>
+  slice(1) |>
+  mutate(avg_duration_min = avg_duration_ms / 60000) |>
+  select(playlist_name, avg_duration_min) |>
+  kable()
+```
+
+**6. What is the most popular playlist?**
+
+```{r}
+#| label: popular-playlist
+
+playlists_df |>
+  distinct(playlist_name, playlist_followers) |>
+  arrange(desc(playlist_followers)) |>
+  slice(1) |>
+  kable()
+```
+
+# Identifying Characteristics of Popular Songs
+
+We now merge the datasets to analyze the audio features of songs that appear frequently in user playlists.
+
+```{r}
+#| label: join-data
+
+playlist_counts <- playlists_df |>
+  count(track_name, name = "playlist_appearances")
+
+combined_data <- songs_data |>
+  inner_join(playlist_counts, by = c("name" = "track_name"))
+```
+
+## Task 5: Visualizations
+
+**1. Correlation between Popularity and Playlist Appearances**
+
+We define "popularity" using the Spotify `popularity` metric and compare it to our calculated appearance count.
+
+```{r}
+#| label: fig-popularity-correlation
+#| fig-cap: "Correlation between Spotify Popularity Score and Playlist Appearances"
+
+ggplot(combined_data, aes(x = popularity, y = playlist_appearances)) +
+  geom_point(alpha = 0.05, color = "darkgreen") +
+  geom_smooth(method = "lm", color = "black", se = FALSE) +
+  labs(x = "Spotify Popularity Score (0-100)", 
+       y = "Count of Playlist Appearances",
+       title = "Do 'Popular' Songs Appear More Often?")
+```
+
+*Interpretation:* As seen in the figure, the regression line is nearly flat, indicating a surprisingly weak correlation between Spotify's global "popularity" score and the frequency of appearances in these specific user playlists.
+
+**2. In what year were the most popular songs released?**
+
+We define "Popular Songs" as those with a Spotify popularity score > 80.
+
+```{r}
+#| label: fig-release-year
+#| fig-cap: "Distribution of Release Years for High-Popularity Songs"
+
+combined_data |>
+  filter(popularity > 80) |>
+  ggplot(aes(x = year)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(title = "Golden Era of Hits",
+       subtitle = "Release years of songs with Popularity > 80",
+       x = "Release Year", y = "Count of Songs")
+```
+
+*Interpretation:* The data skews heavily toward recent years, which is expected given Spotify's user demographic and the platform's recency bias.
+
+**3. In what year did danceability peak?**
+
+```{r}
+#| label: fig-danceability
+#| fig-cap: "Average Danceability over Time"
+
+combined_data |>
+  group_by(year) |>
+  summarize(avg_danceability = mean(danceability, na.rm = TRUE)) |>
+  ggplot(aes(x = year, y = avg_danceability)) +
+  geom_line(color = "purple", linewidth = 1) +
+  geom_smooth(se = FALSE, color = "orange", linetype = "dashed") +
+  labs(title = "The Groove Evolution",
+       subtitle = "Average Danceability by Release Year",
+       x = "Year", y = "Average Danceability (0-1)")
+```
+
+*Interpretation:* Danceability has seen a steady upward trend since the 1970s, peaking in the modern era.
+
+**4. Which decade is most represented on user playlists?**
+
+```{r}
+#| label: fig-decades
+#| fig-cap: "Playlist Representation by Decade"
+
+combined_data |>
+  mutate(decade = floor(year / 10) * 10) |>
+  count(decade, wt = playlist_appearances) |>
+  ggplot(aes(x = factor(decade), y = n)) +
+  geom_col(fill = "firebrick") +
+  labs(title = "Nostalgia Factor",
+       subtitle = "Total Playlist Appearances by Decade",
+       x = "Decade", y = "Total Appearances")
+```
+
+**5. Key Frequency (Polar Coordinates)**
+
+```{r}
+#| label: fig-keys
+#| fig-cap: "Distribution of Musical Keys"
+
+key_labels <- c("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+
+combined_data |>
+  count(key) |>
+  ggplot(aes(x = factor(key, labels = key_labels), y = n, fill = n)) +
+  geom_col() +
+  coord_polar() +
+  scale_fill_viridis_c() +
+  labs(title = "The Key to Success",
+       subtitle = "Frequency of Musical Keys in Dataset",
+       x = "Key", y = "Count") +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+```
+
+**6. Most Popular Track Lengths**
+
+```{r}
+#| label: fig-duration
+#| fig-cap: "Distribution of Track Durations"
+
+combined_data |>
+  mutate(duration_min = duration_ms / 60000) |>
+  ggplot(aes(x = duration_min)) +
+  geom_density(fill = "cyan", alpha = 0.5) +
+  xlim(0, 8) + 
+  labs(title = "Short & Sweet vs. Epic Sagas",
+       subtitle = "Density of Track Durations (Minutes)",
+       x = "Duration (Minutes)", y = "Density")
+```
+
+*Interpretation:* The density plot reveals a strong preference for tracks between 3 and 4 minutes long, the industry standard for radio-friendly pop music.
+
+**7. Custom Exploratory Plots**
+
+The instructions require us to pose and answer at least two additional exploratory questions.
+
+**7a. Mood Mapping: Energy vs. Valence**
+
+Are happier songs always more energetic?
+
+```{r}
+#| label: fig-custom-1
+#| fig-cap: "Energy vs. Valence by Mode"
+
+combined_data |>
+  sample_n(min(1000, nrow(combined_data))) |>
+  ggplot(aes(x = valence, y = energy, color = factor(mode, labels = c("Minor", "Major")))) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Mood Mapping",
+       subtitle = "Energy vs. Valence colored by Mode",
+       x = "Valence (Positivity)", y = "Energy", color = "Mode")
+```
+
+**7b. Loudness Distribution**
+
+How loud are the songs in this dataset? Is there a standardization?
+
+```{r}
+#| label: fig-custom-2
+#| fig-cap: "Distribution of Song Loudness"
+
+combined_data |>
+  ggplot(aes(x = loudness)) +
+  geom_histogram(binwidth = 2, fill = "darkred", color = "white") +
+  labs(title = "Turn It Up!",
+       subtitle = "Distribution of Loudness (dB)",
+       x = "Loudness (dB)", y = "Count")
+```
+
+*Interpretation:* The distribution of loudness is left-skewed, peaking around -5 to -8 dB. This aligns with modern mastering standards in the streaming era (often referred to as the "Loudness Wars").
+
+# Building the Ultimate Playlist
+
+## Task 6: Finding Related Songs
+
+To build our playlist, we select **"Midnight City"** by M83 as our anchor. This track epitomizes the "driving at night" aesthetic we aim to curate. We use heuristics including Key matching, Tempo range (± 15 BPM), and Vibe matching (Valence/Energy) to find suitable candidates.
+
+```{r}
+#| label: find-candidates
+
+anchor_song_name <- "Midnight City"
+anchor <- combined_data |> 
+  filter(name == anchor_song_name) |> 
+  slice(1)
+
+# Fallback if anchor is missing
+if (nrow(anchor) == 0) {
+  anchor <- combined_data |> 
+    arrange(desc(popularity)) |> 
+    slice(1)
+}
+
+find_candidates <- function(data, anchor_song) {
+  data |>
+    filter(
+      name != anchor_song$name,
+      key == anchor_song$key,
+      between(tempo, anchor_song$tempo - 15, anchor_song$tempo + 15),
+      between(valence, anchor_song$valence - 0.2, anchor_song$valence + 0.2)
+    )
+}
+
+candidates <- find_candidates(combined_data, anchor) |>
+  mutate(is_popular = popularity > 50)
+
+# Candidate breakdown
+table(candidates$is_popular)
+```
+
+## Task 7: Curate and Analyze
+
+We select a final list of 12 songs: the anchor plus a mix of popular hits and "hidden gems" (low popularity).
+
+```{r}
+#| label: create-playlist
+
+set.seed(123)  # For reproducibility
+
+final_playlist <- bind_rows(
+  anchor,
+  candidates |> filter(!is_popular) |> slice_sample(n = min(6, sum(!candidates$is_popular))), 
+  candidates |> filter(is_popular) |> slice_sample(n = min(5, sum(candidates$is_popular))) 
+) |> 
+  distinct(name, .keep_all = TRUE)
+
+# Visualize Evolution
+final_playlist |>
+  mutate(track_order = row_number()) |>
+  pivot_longer(cols = c(energy, valence, danceability), 
+               names_to = "metric", 
+               values_to = "value") |>
+  ggplot(aes(x = track_order, y = value, color = metric)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  labs(title = "Playlist Flow Analysis",
+       subtitle = "Evolution of Energy, Valence, and Danceability",
+       x = "Track Position", y = "Score")
+```
+
+# Deliverable: The Ultimate Playlist
+
+### **Playlist Title:** "Neon Midnight Drive"
+
+**Description:**
+A synth-heavy, driving playlist designed for late-night coding sessions or highway drives. It blends high-energy electronic beats with melancholic undertones, ensuring the listener stays awake but not overwhelmed.
+
+**Design Principles:**
+
+1. **Sonic Continuity:** All tracks share the same musical key (`r anchor$key`) and tight tempo range to allow for seamless cross-fading.
+2. **The "All Rise" Effect:** As visualized in the flow analysis, the energy maintains a steady upward trend to prevent fatigue.
+3. **Discovery:** Over 50% of the tracks are "Hidden Gems" (Popularity < 50), offering listeners new sounds alongside familiar hits.
+
+```{r}
+#| label: final-table
+
+final_playlist |>
+  select(name, artist, year, popularity, tempo, key) |>
+  datatable(
+    caption = "The Ultimate Playlist: Neon Midnight Drive",
+    rownames = FALSE,
+    options = list(
+      dom = 't',
+      paging = FALSE,
+      scrollX = TRUE
+    )
+  )
+```

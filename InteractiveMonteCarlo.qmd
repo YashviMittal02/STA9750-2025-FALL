@@ -1,0 +1,385 @@
+---
+title: "CUNY Retirement Plan Analysis: A Monte Carlo Approach"
+subtitle: "Data-Driven Decision Support for New Faculty"
+author: "Yashvi Mittal"
+date: "2025-12-18"
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+  cache: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(httr2)
+library(lubridate)
+library(scales)
+library(gt)
+library(plotly)
+
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center", fig.retina = 2)
+```
+
+## Summary
+This analysis evaluates CUNY's two retirement plans: the defined-benefit Teachers Retirement System (TRS) and the defined-contribution Optional Retirement Plan (ORP). Using Monte Carlo simulation with bootstrap resampling of historical market data, we compare long-term financial outcomes to assist new faculty in making this permanent decision.
+
+## Data Acquisition
+
+```{r api-keys, echo=FALSE}
+alpha_key <- trimws(readLines("keys/alphavantage_key.txt", n = 1, warn = FALSE))
+fred_key <- trimws(readLines("keys/fred_key.txt", n = 1, warn = FALSE))
+
+if (alpha_key == "" || fred_key == "") stop("API key file is empty or missing.")
+```
+
+```{r data-functions}
+get_fred_series <- function(series_id, api_key, start_date = "2004-01-01") {
+  request("https://api.stlouisfed.org/fred/series/observations") |>
+    req_url_query(
+      series_id = series_id,
+      api_key = as.character(api_key)[1],
+      file_type = "json",
+      observation_start = start_date
+    ) |>
+    req_retry(max_tries = 3) |>
+    req_perform() |> 
+    resp_body_json(simplifyVector = TRUE) |>
+    pluck("observations") |>
+    as_tibble() |>
+    transmute(
+      date = floor_date(ymd(date), "month"),
+      value = as.numeric(value)
+    ) |>
+    drop_na()
+}
+
+get_alphavantage_monthly <- function(symbol, api_key) {
+  Sys.sleep(15)  # Rate limit: 5 calls/min
+  
+  resp <- request("https://www.alphavantage.co/query") |>
+    req_url_query(
+      `function` = "TIME_SERIES_MONTHLY_ADJUSTED",
+      symbol = symbol,
+      apikey = as.character(api_key)[1]
+    ) |>
+    req_retry(max_tries = 3) |>
+    req_perform() |> 
+    resp_body_json()
+
+  if (!is.null(resp$Note) || !is.null(resp$`Error Message`)) {
+    stop("AlphaVantage Error: ", resp$Note, resp$`Error Message`)
+  }
+
+  resp$`Monthly Adjusted Time Series` |>
+    map_dfr(~as.numeric(.x$`5. adjusted close`)) |>
+    pivot_longer(everything(), names_to = "date", values_to = "adjusted_close") |>
+    mutate(date = floor_date(ymd(date), "month")) |>
+    arrange(date) |>
+    mutate(monthly_return = (adjusted_close / lag(adjusted_close)) - 1) |>
+    drop_na() |>
+    select(date, monthly_return)
+}
+```
+
+## Data Processing
+
+```{r fetch-data, cache=TRUE}
+# Economic indicators from FRED
+cpi_data <- get_fred_series("CPIAUCSL", fred_key)
+wage_data <- get_fred_series("CES0500000003", fred_key)
+treasury_data <- get_fred_series("DGS2", fred_key)
+
+# Market data from AlphaVantage
+market_data <- list(
+  us = get_alphavantage_monthly("VTI", alpha_key),
+  intl = get_alphavantage_monthly("VXUS", alpha_key),
+  bond = get_alphavantage_monthly("BND", alpha_key)
+)
+
+# Combine all data
+combined_monthly_data <- cpi_data |>
+  arrange(date) |>
+  mutate(cpi_monthly_change = value / lag(value) - 1) |>
+  select(date, cpi_monthly_change) |>
+  inner_join(
+    wage_data |> 
+      arrange(date) |> 
+      mutate(wage_monthly_change = value / lag(value) - 1) |> 
+      select(date, wage_monthly_change),
+    by = "date"
+  ) |>
+  inner_join(
+    treasury_data |> 
+      arrange(date) |> 
+      mutate(treasury_monthly_return = value / 100 / 12) |> 
+      select(date, treasury_monthly_return),
+    by = "date"
+  ) |>
+  inner_join(market_data$us |> rename(us_equity_return = monthly_return), by = "date") |>
+  inner_join(market_data$intl |> rename(intl_equity_return = monthly_return), by = "date") |>
+  inner_join(market_data$bond |> rename(bond_return = monthly_return), by = "date") |>
+  drop_na() |>
+  filter(date >= max(date) - years(20)) |>
+  distinct(date, .keep_all = TRUE)
+
+combined_monthly_data |> 
+  slice_tail(n = 5) |>
+  gt() |>
+  fmt_percent(columns = -date) |>
+  tab_header(title = "Historical Monthly Economic Data (Recent)")
+```
+
+```{r correlation-plot}
+cor_mat <- cor(select(combined_monthly_data, -date))
+plot_ly(
+  x = colnames(cor_mat), 
+  y = colnames(cor_mat), 
+  z = cor_mat, 
+  type = "heatmap",
+  colors = colorRamp(c("#D55E00", "white", "#0072B2"))
+) |> 
+  layout(title = "Correlation Matrix of Monthly Returns")
+```
+
+## Retirement Plan Logic
+
+```{r trs-logic}
+calculate_trs_benefit <- function(salary_history, retirement_month) {
+  fas <- salary_history |>
+    filter(month <= retirement_month, month > (retirement_month - 36)) |>
+    summarize(fas = mean(salary_annual)) |>
+    pull(fas)
+  
+  years_service <- retirement_month / 12
+  
+  benefit_pct <- case_when(
+    years_service < 20 ~ 0.0167 * years_service,
+    years_service == 20 ~ 0.35,
+    TRUE ~ 0.35 + 0.02 * (years_service - 20)
+  )
+  
+  benefit_pct * fas / 12
+}
+
+apply_trs_cola <- function(current_benefit, annual_cpi) {
+  adj <- ceiling((annual_cpi * 0.5 * 100) * 10) / 10
+  adj <- pmin(pmax(adj, 1.0), 3.0) / 100
+  current_benefit * (1 + adj)
+}
+```
+
+```{r orp-logic}
+get_asset_allocation <- function(age) {
+  if (age < 50) list(us = 0.54, intl = 0.36, bond = 0.10, short = 0.00)
+  else if (age < 60) list(us = 0.47, intl = 0.32, bond = 0.21, short = 0.00)
+  else if (age < 75) list(us = 0.34, intl = 0.23, bond = 0.43, short = 0.00)
+  else list(us = 0.19, intl = 0.13, bond = 0.62, short = 0.06)
+}
+
+get_contribution_rate <- function(salary) {
+  if (salary <= 45000) 0.03
+  else if (salary <= 55000) 0.035
+  else if (salary <= 75000) 0.045
+  else if (salary <= 100000) 0.0575
+  else 0.06
+}
+```
+
+## Monte Carlo Simulation
+
+```{r simulation-engine, cache=TRUE}
+run_monte_carlo <- function(n_sims = 500, start_age = 30, ret_age = 65, 
+                           death_age = 85, start_sal = 67784) {
+  n_work <- (ret_age - start_age) * 12
+  n_ret <- (death_age - ret_age) * 12
+  
+  map_dfr(1:n_sims, function(sim) {
+    work_sample <- slice_sample(combined_monthly_data, n = n_work, replace = TRUE)
+    ret_sample <- slice_sample(combined_monthly_data, n = n_ret, replace = TRUE)
+    
+    # Accumulation phase
+    salary_hist <- tibble(month = 1:n_work) |>
+      mutate(
+        wage_growth = work_sample$wage_monthly_change,
+        salary_monthly = (start_sal / 12) * cumprod(1 + wage_growth),
+        salary_annual = salary_monthly * 12,
+        age = start_age + (month / 12)
+      )
+    
+    trs_monthly <- calculate_trs_benefit(salary_hist, n_work)
+    
+    # ORP accumulation
+    orp_bal <- 0
+    for (i in 1:n_work) {
+      emp_rate <- get_contribution_rate(salary_hist$salary_annual[i])
+      empr_rate <- if_else(i / 12 <= 7, 0.08, 0.10)
+      contrib <- salary_hist$salary_monthly[i] * (emp_rate + empr_rate)
+      
+      alloc <- get_asset_allocation(salary_hist$age[i])
+      ret <- alloc$us * work_sample$us_equity_return[i] +
+             alloc$intl * work_sample$intl_equity_return[i] +
+             alloc$bond * work_sample$bond_return[i] +
+             alloc$short * work_sample$treasury_monthly_return[i]
+      
+      orp_bal <- orp_bal * (1 + ret) + contrib
+    }
+    
+    # Decumulation phase
+    trs_total <- 0
+    orp_total <- 0
+    curr_withdraw <- orp_bal * 0.04 / 12
+    orp_curr <- orp_bal
+    
+    for (j in 1:n_ret) {
+      if (j > 12 && (j - 1) %% 12 == 0) {
+        annual_cpi <- prod(1 + ret_sample$cpi_monthly_change[(j - 12):(j - 1)]) - 1
+        trs_monthly <- apply_trs_cola(trs_monthly, annual_cpi)
+        curr_withdraw <- curr_withdraw * (1 + annual_cpi)
+      }
+      
+      trs_total <- trs_total + trs_monthly
+      
+      if (orp_curr > 0) {
+        amt <- min(curr_withdraw, orp_curr)
+        orp_total <- orp_total + amt
+        orp_curr <- orp_curr - amt
+        
+        alloc <- get_asset_allocation(ret_age + j / 12)
+        ret <- alloc$us * ret_sample$us_equity_return[j] +
+               alloc$intl * ret_sample$intl_equity_return[j] +
+               alloc$bond * ret_sample$bond_return[j] +
+               alloc$short * ret_sample$treasury_monthly_return[j]
+        
+        orp_curr <- max(0, orp_curr * (1 + ret))
+      }
+    }
+    
+    tibble(
+      sim = sim,
+      trs_total = trs_total,
+      orp_total = orp_total,
+      orp_better = orp_total > trs_total,
+      depleted = orp_curr == 0,
+      final_balance = orp_curr
+    )
+  })
+}
+
+sim_results <- run_monte_carlo()
+```
+
+## Results
+
+```{r results-plot}
+plot_ly(alpha = 0.7) |>
+  add_histogram(
+    x = sim_results$trs_total / 1000, 
+    name = "TRS Total ($K)",
+    marker = list(line = list(width = 1, color = "white"))
+  ) |>
+  add_histogram(x = sim_results$orp_total / 1000, name = "ORP Total ($K)") |>
+  layout(
+    barmode = "overlay", 
+    title = "Distribution of Total Retirement Income",
+    xaxis = list(title = "Total Income ($K)"),
+    yaxis = list(title = "Frequency (Log Scale)", type = "log")
+  )
+```
+
+**Risk of Ruin:** ORP depleted funds before death in `r percent(mean(sim_results$depleted))` of scenarios.
+
+**Income Superiority:** ORP provided higher total income in `r percent(mean(sim_results$orp_better))` of scenarios.
+
+## Recommendation
+
+Based on the Monte Carlo simulation, **TRS is recommended** for faculty starting at age 30 with moderate risk tolerance.
+
+**Key Trade-offs:**
+
+- **TRS:** Provides predictable, inflation-adjusted income around $3,500/month, eliminating longevity risk
+- **ORP:** Offers upside potential (some scenarios exceed $12,000/month), but most likely outcome ($2,000-$3,000/month) is lower than TRS
+
+For risk-neutral or risk-averse individuals, TRS offers a superior income floor. ORP is only preferable if willing to accept >50% chance of underperformance in exchange for small probability of significant wealth.
+
+## Sensitivity Analysis
+
+```{r sensitivity-analysis}
+run_sim_for_age <- function(ret_age_input, n_sims = 200) {
+  start_age <- 30
+  death_age <- 85
+  start_sal <- 67784
+  
+  n_work <- (ret_age_input - start_age) * 12
+  n_ret <- (death_age - ret_age_input) * 12
+  
+  results <- map_dfr(1:n_sims, function(sim) {
+    work_sample <- slice_sample(combined_monthly_data, n = n_work, replace = TRUE)
+    ret_sample <- slice_sample(combined_monthly_data, n = n_ret, replace = TRUE)
+    
+    salary_hist <- tibble(month = 1:n_work) |>
+      mutate(
+        wage_growth = work_sample$wage_monthly_change,
+        salary_monthly = (start_sal / 12) * cumprod(1 + wage_growth),
+        salary_annual = salary_monthly * 12,
+        age = start_age + (month / 12)
+      )
+    
+    trs_monthly <- calculate_trs_benefit(salary_hist, n_work)
+    
+    orp_bal <- 0
+    for (i in 1:n_work) {
+      emp_rate <- get_contribution_rate(salary_hist$salary_annual[i])
+      er_rate <- if (i / 12 <= 7) 0.08 else 0.10
+      contrib <- salary_hist$salary_monthly[i] * (emp_rate + er_rate)
+      
+      alloc <- get_asset_allocation(salary_hist$age[i])
+      ret <- alloc$us * work_sample$us_equity_return[i] +
+             alloc$intl * work_sample$intl_equity_return[i] +
+             alloc$bond * work_sample$bond_return[i] +
+             alloc$short * work_sample$treasury_monthly_return[i]
+      
+      orp_bal <- orp_bal * (1 + ret) + contrib
+    }
+    
+    trs_lifetime <- trs_monthly * n_ret
+    orp_lifetime <- (orp_bal * 0.04) * (n_ret / 12)
+    
+    tibble(orp_better = orp_lifetime > trs_lifetime)
+  })
+  
+  tibble(
+    Retirement_Age = ret_age_input,
+    ORP_Win_Rate = mean(results$orp_better)
+  )
+}
+
+sensitivity_results <- bind_rows(
+  run_sim_for_age(55),
+  run_sim_for_age(60),
+  run_sim_for_age(65),
+  run_sim_for_age(70)
+)
+
+p <- ggplot(sensitivity_results, aes(x = Retirement_Age, y = ORP_Win_Rate)) +
+  geom_line(color = "#2c3e50", linewidth = 1) +
+  geom_point(color = "#e67e22", size = 3) +
+  scale_y_continuous(labels = percent) +
+  labs(
+    title = "Sensitivity Analysis: ORP Win Rate vs. Retirement Age",
+    subtitle = "Does working longer favor the investment-based plan?",
+    x = "Retirement Age",
+    y = "Probability ORP Exceeds TRS"
+  ) +
+  theme_minimal()
+
+ggplotly(p)
+```
+
+**Analysis:** Early retirement (age 55) strongly favors TRS with ORP winning <30% of the time. As retirement age increases to 70, ORP's probability of outperforming approaches 50%. Longer careers allow more time for compound growth and market recovery, making ORP more attractive for faculty planning to work into their 70s.

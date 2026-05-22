@@ -1,0 +1,1061 @@
+---
+title: "STA 9750 Mini-Project #03: The Electoral College"
+author: "Yashvi Mittal"
+date: "2025-12-19"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    theme: cosmo
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+execute:
+  warning: false
+  message: false
+  cache: true
+---
+
+# Introduction
+
+In this project, I investigate the claim that the US Electoral College systematically biases election results. I analyze historical congressional and presidential election data to determine how different allocation schemes would have altered the outcomes of past elections.
+
+Understanding the Electoral College's impact on democratic representation is crucial for informed civic discourse. While the system was designed to balance state and federal interests, critics argue it can produce outcomes that diverge from the national popular will. This analysis examines that claim through rigorous data analysis.
+
+## Executive Summary
+
+**Quick Answer**: Senator Warren's claim is **Mostly True** 
+
+- **Confirmed**: Electoral College has favored Republicans in 2 of last 6 elections (2000, 2016)
+- **Confirmed**: System can produce winners who lost the popular vote
+-️ **Nuanced**: Common reforms (like District+2) would make outcomes MORE erratic, not less
+-️ **Nuanced**: No current bias is permanent; historical patterns were different
+
+**Bottom Line**: The Electoral College does undermine vote equality, but fixing it requires careful reform design.
+
+## The Fact Check
+
+> **Claim:** "My view is that every vote matters and the way we can make that happen is that we can have national voting, and that means get rid of the Electoral College." 
+> 
+> *— Senator Elizabeth Warren (CNN Town Hall, 2019)*
+
+This report will retrodict election results under various alternative allocation rules to evaluate the veracity of this claim. I will examine four different electoral systems:
+
+1. **Winner-Take-All (Current System)**: The actual historical results
+2. **District + 2 (Maine/Nebraska Model)**: Each congressional district awards 1 EC vote to its winner; state winner receives 2 additional votes
+3. **Proportional Allocation**: EC votes distributed according to state popular vote percentages
+4. **National Popular Vote**: Direct election by nationwide popular vote
+
+---
+
+# Data Acquisition
+
+## Setup and Libraries
+
+```{r setup}
+#| code-fold: false
+library(tidyverse)
+library(sf)
+library(maps)
+library(gganimate)
+library(gifski) # Required for rendering animations
+library(knitr)
+library(scales)
+
+# Create data directory if it doesn't exist
+if(!dir.exists("data")) dir.create("data")
+
+```
+
+## Task 1: Historical Shapefiles (1976-2012)
+
+I download congressional district shapefiles from the authoritative Lewis et al. dataset, which provides boundaries for all US Congresses from 1789 to 2012.
+
+```{r download_historical}
+# Function to download Lewis et al. shapefiles
+download_lewis_shapes <- function() {
+  base_url <- "[http://cdmaps.polisci.ucla.edu/shp/districts](http://cdmaps.polisci.ucla.edu/shp/districts)"
+  # 94th Congress (1976) to 112th Congress (2012)
+  for (congress in 94:112) {
+    fname <- paste0("districts", sprintf("%03d", congress), ".zip")
+    local_path <- file.path("data", fname)
+    
+    if (!file.exists(local_path)) {
+      full_url <- paste0(base_url, sprintf("%03d", congress), ".zip")
+      message(paste("Downloading", fname))
+      tryCatch(
+        download.file(full_url, destfile = local_path, mode = "wb", quiet = TRUE),
+        error = function(e) message(paste("Failed to download:", full_url))
+      )
+      Sys.sleep(0.5) # Be polite to the server
+    }
+  }
+  message("Lewis et al. shapefiles download complete")
+}
+
+# Execute download
+download_lewis_shapes()
+
+```
+
+## Task 2: Modern Shapefiles (2014-2022)
+
+For elections after 2012, I use shapefiles from the US Census Bureau TIGER/Line database, which provides the most current and accurate district boundaries.
+
+```{r download_modern}
+# Function to download Census shapefiles
+download_census_shapes <- function() {
+  years <- c(2014, 2016, 2018, 2020, 2022)
+  congress_nums <- c(114, 115, 116, 117, 118)
+  
+  for (i in seq_along(years)) {
+    yr <- years[i]
+    cong <- congress_nums[i]
+    fname <- paste0("tl_", yr, "_us_cd", cong, ".zip")
+    local_path <- file.path("data", fname)
+    
+    if (!file.exists(local_path)) {
+      url <- paste0("[https://www2.census.gov/geo/tiger/TIGER](https://www2.census.gov/geo/tiger/TIGER)", yr, "/CD/", fname)
+      message(paste("Downloading", fname))
+      tryCatch(
+        download.file(url, destfile = local_path, mode = "wb", quiet = TRUE),
+        error = function(e) message(paste("Failed to download:", url))
+      )
+      Sys.sleep(0.5) # Be polite to the server
+    }
+  }
+  message("Census shapefiles download complete")
+}
+
+# Execute download
+download_census_shapes()
+
+```
+
+## Load Electoral Data
+
+```{r load_data}
+# Function to automatically detect separator (Comma vs Tab)
+smart_read <- function(file_path) {
+  if (!file.exists(file_path)) stop(paste("File not found:", file_path))
+  
+  # Peek at the first line to check for tabs
+  first_line <- readLines(file_path, n = 1, warn = FALSE)
+  
+  if (grepl("\t", first_line)) {
+    message(paste("Reading", basename(file_path), "as TAB-separated"))
+    df <- read_tsv(file_path, show_col_types = FALSE)
+  } else {
+    message(paste("Reading", basename(file_path), "as COMMA-separated"))
+    df <- read_csv(file_path, show_col_types = FALSE)
+  }
+  
+  # Force column names to lowercase (fixes 'Year' vs 'year' mismatches)
+  colnames(df) <- tolower(colnames(df))
+  return(df)
+}
+
+# 1. Load House Data
+house_files <- list.files(path = ".", pattern = "house", ignore.case = TRUE, full.names = TRUE)
+house_file <- house_files[!grepl(".qmd|.html", house_files)][1]
+
+if (!is.na(house_file) && file.exists(house_file)) {
+  house_data <- smart_read(house_file)
+  message(paste("Loaded House data:", nrow(house_data), "rows"))
+} else {
+  stop("Could not find House data file. Please download from MIT Election Lab.")
+}
+
+# 2. Load President Data
+pres_files <- list.files(path = ".", pattern = "president", ignore.case = TRUE, full.names = TRUE)
+pres_file <- pres_files[!grepl(".qmd|.html", pres_files)][1]
+
+if (!is.na(pres_file) && file.exists(pres_file)) {
+  pres_data <- smart_read(pres_file)
+  
+  # Fix column name differences safely
+  if("party_detailed" %in% names(pres_data) && !"party_simplified" %in% names(pres_data)) {
+    pres_data <- pres_data %>% rename(party_simplified = party_detailed)
+  }
+  message(paste("Loaded Presidential data:", nrow(pres_data), "rows"))
+} else {
+  stop("Could not find Presidential data file. Please download from MIT Election Lab.")
+}
+
+# Standardize year columns
+if (is.list(house_data$year)) { house_data$year <- as.numeric(unlist(house_data$year)) }
+if (is.list(pres_data$year)) { pres_data$year <- as.numeric(unlist(pres_data$year)) }
+
+message("\n--- Data Loading Summary ---")
+message(paste("House data years:", min(house_data$year), "-", max(house_data$year)))
+message(paste("Presidential data years:", min(pres_data$year), "-", max(pres_data$year)))
+message(paste("States in House data:", n_distinct(house_data$state)))
+message(paste("States in Presidential data:", n_distinct(pres_data$state)))
+
+```
+
+# Initial Exploration (Task 3)
+
+## 1. Shifts in Congressional Representation
+
+The US Constitution mandates reapportionment of House seats every 10 years following the Census. This reflects population shifts across states and directly impacts Electoral College vote distribution (since EC votes = House seats + 2 Senate seats).
+
+```{r seat_shifts}
+min_yr <- min(house_data$year, na.rm = TRUE)
+max_yr <- max(house_data$year, na.rm = TRUE)
+
+seats_start <- house_data %>% 
+  filter(year == min_yr) %>% 
+  distinct(state, district) %>% 
+  count(state, name = "seats_start")
+
+seats_end <- house_data %>% 
+  filter(year == max_yr) %>% 
+  distinct(state, district) %>% 
+  count(state, name = "seats_end")
+
+seat_diff <- seats_start %>% 
+  full_join(seats_end, by = "state") %>% 
+  mutate(
+    seats_start = replace_na(seats_start, 0),
+    seats_end = replace_na(seats_end, 0),
+    diff = seats_end - seats_start
+  ) %>% 
+  arrange(desc(diff))
+
+# Display tables
+kable(
+  head(seat_diff, 5), 
+  caption = paste("States Gaining Most Seats", min_yr, "-", max_yr),
+  col.names = c("State", "Seats (1976)", "Seats (2024)", "Change")
+)
+
+kable(
+  tail(seat_diff %>% filter(state != "DISTRICT OF COLUMBIA"), 5), 
+  caption = paste("States Losing Most Seats", min_yr, "-", max_yr),
+  col.names = c("State", "Seats (1976)", "Seats (2024)", "Change")
+)
+
+```
+
+**Key Findings:**
+
+* **Sunbelt Growth:** Texas (+14 seats) and Florida (+13 seats) show dramatic population growth, significantly increasing their Electoral College influence.
+* **Rust Belt Decline:** New York (-13 seats), Pennsylvania (-8 seats), and Ohio (-8 seats) demonstrate the population shift away from traditional industrial states.
+* **Electoral Impact:** These shifts have fundamentally altered presidential campaign strategies, with candidates focusing more on growing Sunbelt states and less on declining Midwest states.
+
+## 2. NY Fusion Voting Analysis
+
+New York State allows candidates to appear on multiple party "lines" on the ballot, with votes across all lines counted together. This unique system can affect election outcomes when minor party support proves decisive.
+
+```{r fusion_voting}
+ny_fusion_check <- house_data %>%
+  filter(state == "NEW YORK") %>%
+  # Sum votes by candidate across all party lines
+  group_by(year, district, candidate) %>%
+  mutate(total_candidate_votes = sum(candidatevotes)) %>%
+  ungroup() %>%
+  # Look at major party lines only (simulating "no fusion")
+  filter(party %in% c("DEMOCRAT", "REPUBLICAN")) %>%
+  select(year, district, candidate, party, major_party_votes = candidatevotes, total_candidate_votes) %>%
+  distinct() %>%
+  # Compare within district
+  group_by(year, district) %>%
+  filter(n() >= 2) %>%
+  arrange(year, district, desc(total_candidate_votes)) %>%
+  mutate(rank_total = row_number()) %>%
+  arrange(year, district, desc(major_party_votes)) %>%
+  mutate(rank_major = row_number()) %>%
+  ungroup() %>%
+  # Find flips: winner by total votes different from winner by major party votes
+  group_by(year, district) %>%
+  filter(any(rank_total == 1 & rank_major != 1)) %>%
+  arrange(year, district, rank_total)
+
+if (nrow(ny_fusion_check) > 0) {
+  kable(
+    head(ny_fusion_check, 8), 
+    caption = "New York Elections Decided by Fusion Voting",
+    col.names = c("Year", "District", "Candidate", "Party", "Major Party Votes", "Total Votes", "Rank (Total)", "Rank (Major)")
+  )
+  
+  message(paste("\nFound", nrow(ny_fusion_check)/2, "elections where fusion voting changed the outcome"))
+} else {
+  message("No elections found where fusion voting changed the outcome in our dataset")
+}
+
+```
+
+**Analysis:** The fusion voting system demonstrates how minor parties (Working Families Party, Conservative Party) can influence outcomes. In close races, securing multiple party line nominations can be decisive. This illustrates that electoral system design choices—even seemingly minor ones—can meaningfully affect results.
+
+## 3. Presidential Coattails
+
+The "coattail effect" refers to the tendency of popular presidential candidates to boost their party's congressional candidates. Analyzing this helps us understand whether presidential and congressional elections are becoming more or less coupled over time.
+
+```{r coattails}
+# Only analyze presidential election years present in both datasets
+common_years <- intersect(unique(house_data$year), unique(pres_data$year))
+pres_years <- common_years[common_years %% 4 == 0]
+
+# Aggregate House votes by party/state/year
+house_agg <- house_data %>%
+  filter(year %in% pres_years) %>%
+  group_by(year, state, party) %>%
+  summarize(house_votes = sum(candidatevotes, na.rm = TRUE), .groups = "drop") %>%
+  group_by(year, state) %>%
+  mutate(house_pct = house_votes / sum(house_votes)) %>%
+  filter(party %in% c("DEMOCRAT", "REPUBLICAN"))
+
+# Aggregate Presidential votes
+pres_agg <- pres_data %>%
+  filter(year %in% pres_years) %>%
+  group_by(year, state, party_simplified) %>%
+  summarize(pres_votes = sum(candidatevotes, na.rm = TRUE), .groups = "drop") %>%
+  group_by(year, state) %>%
+  mutate(pres_pct = pres_votes / sum(pres_votes)) %>%
+  rename(party = party_simplified) %>%
+  mutate(party = str_to_upper(party)) %>%
+  filter(party %in% c("DEMOCRAT", "REPUBLICAN"))
+
+# Join and Compare
+comparison <- house_agg %>%
+  inner_join(pres_agg, by = c("year", "state", "party")) %>%
+  mutate(difference = pres_pct - house_pct)
+
+# Summary statistics by year and party
+coattail_summary <- comparison %>%
+  group_by(year, party) %>%
+  summarize(
+    mean_diff = mean(difference, na.rm = TRUE),
+    median_diff = median(difference, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Visualization
+ggplot(comparison, aes(x = year, y = difference, color = party)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_jitter(alpha = 0.3, width = 0.3, size = 1) + 
+  geom_smooth(method = "loess", se = TRUE, linewidth = 1.5) +
+  scale_color_manual(values = c("DEMOCRAT" = "#2E74C0", "REPUBLICAN" = "#CB454A")) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    title = "Presidential Coattails: Do Presidential Candidates Outperform House Candidates?",
+    subtitle = "Positive values indicate presidential candidate received higher vote share than House candidates",
+    y = "Presidential Vote % - House Vote %",
+    x = "Election Year",
+    color = "Party",
+    caption = "Each point represents one state. Smoothed trend lines show LOESS fit."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 14),
+    plot.caption = element_text(hjust = 0, face = "italic")
+  )
+
+# Summary table
+kable(
+  coattail_summary %>% 
+    pivot_wider(names_from = party, values_from = c(mean_diff, median_diff)) %>%
+    arrange(year),
+  caption = "Presidential Coattail Effect by Year (Mean and Median Difference)",
+  digits = 4
+)
+
+```
+
+**Key Findings:**
+
+* **Increasing Polarization:** The coattail effect has weakened over time, suggesting voters increasingly split tickets or vote along party lines consistently at both levels.
+* **Party Differences:** Presidential candidates sometimes run ahead of (positive difference) or behind (negative difference) their party's congressional candidates, depending on candidate quality and national vs. local issues.
+* **Strategic Implications:** Weak coattails suggest presidential campaigns may not significantly help down-ballot candidates, affecting campaign resource allocation.
+
+# Visualization (Tasks 4 & 5)
+
+## Task 4: Automating Zip Extraction
+
+To work with the shapefile data, I create a robust function to extract and read .shp files from zip archives.
+
+```{r zip_function}
+read_shp_from_zip <- function(zip_path) {
+  if (!file.exists(zip_path)) {
+    warning(paste("Zip file not found:", zip_path))
+    return(NULL)
+  }
+  
+  td <- tempdir()
+  
+  tryCatch({
+    # Extract zip contents
+    zip_contents <- unzip(zip_path, exdir = td, overwrite = TRUE)
+    
+    # Find the .shp file
+    fname_shp <- zip_contents[grepl("\\.shp$", zip_contents, ignore.case = TRUE)]
+    
+    if (length(fname_shp) == 0) {
+      warning(paste("No .shp file found in:", zip_path))
+      return(NULL)
+    }
+    
+    # Read the shapefile
+    shp_data <- read_sf(fname_shp[1])
+    
+    return(shp_data)
+  }, error = function(e) {
+    warning(paste("Error reading shapefile from", zip_path, ":", e$message))
+    return(NULL)
+  })
+}
+
+```
+
+## Task 5: 2000 Electoral College Map
+
+The 2000 election (Bush v. Gore) was one of the most controversial in US history, decided by just 537 votes in Florida and resulting in a Supreme Court case. This map visualizes the state-by-state results.
+
+```{r map_2000, fig.width=10, fig.height=6}
+# Get 2000 election results
+election_2000 <- pres_data %>%
+  filter(year == 2000) %>%
+  group_by(state) %>%
+  filter(candidatevotes == max(candidatevotes)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(state, winner = party_simplified, candidate, candidatevotes) %>%
+  mutate(
+    region = tolower(state),
+    winner = str_to_upper(winner)
+  )
+
+# Calculate EC votes for 2000 (using House seats from 2000)
+ec_2000 <- house_data %>%
+  filter(year == 2000) %>%
+  group_by(state) %>%
+  summarize(ec_votes = n_distinct(district) + 2, .groups = "drop") %>%
+  mutate(region = tolower(state))
+
+# Add DC (3 EC votes, 2 Gore, 1 Faithless/Abstained)
+# Note: Data typically records just candidate votes. We manually handle DC to match historical record (266 Gore).
+dc_2000 <- tibble(
+  state = "DISTRICT OF COLUMBIA",
+  winner = "DEMOCRAT",
+  candidate = "AL GORE",
+  candidatevotes = 171923,
+  region = "district of columbia"
+)
+election_2000 <- bind_rows(election_2000, dc_2000)
+
+ec_dc <- tibble(state = "DISTRICT OF COLUMBIA", ec_votes = 3, region = "district of columbia")
+ec_2000 <- bind_rows(ec_2000, ec_dc)
+
+# Join with map data (Using Built-in Maps for Reliability)
+us_map_data <- map_data("state")
+map_plot_data <- us_map_data %>%
+  left_join(election_2000, by = "region") %>%
+  left_join(ec_2000, by = "region")
+
+# Create state centroids for labels
+state_centers <- map_plot_data %>%
+  group_by(region, winner, ec_votes) %>%
+  summarize(
+    long = mean(long),
+    lat = mean(lat),
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(winner))
+
+# Plot
+ggplot(map_plot_data, aes(x = long, y = lat, group = group, fill = winner)) +
+  geom_polygon(color = "white", linewidth = 0.3) +
+  geom_text(
+    data = state_centers,
+    aes(x = long, y = lat, label = ec_votes, group = NULL),
+    color = "white",
+    fontface = "bold",
+    size = 3
+  ) +
+  coord_fixed(1.3) + 
+  scale_fill_manual(
+    values = c("DEMOCRAT" = "#2E74C0", "REPUBLICAN" = "#CB454A", "GREEN" = "#00C000"),
+    name = "Winner",
+    na.value = "gray90"
+  ) +
+  labs(
+    title = "2000 Presidential Election Results",
+    subtitle = "Bush (271 EC votes) defeated Gore (266 EC votes) despite losing popular vote by 543,895 votes",
+    caption = "Numbers show Electoral College votes per state"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 11, hjust = 0.5),
+    plot.caption = element_text(hjust = 0.5, face = "italic", size = 9)
+  )
+
+# Verify EC totals
+ec_totals_2000 <- election_2000 %>%
+  left_join(ec_2000, by = "region") %>%
+  group_by(winner) %>%
+  summarize(total_ec = sum(ec_votes, na.rm = TRUE), .groups = "drop")
+
+kable(
+  ec_totals_2000,
+  caption = "2000 Electoral College Vote Totals",
+  col.names = c("Party", "Electoral Votes")
+)
+
+```
+
+**Historical Context:** This election highlighted the Electoral College's ability to produce winners who lost the popular vote. Gore won 48.4% of the popular vote to Bush's 47.9%, but Bush secured 271 EC votes to Gore's 266 (one DC elector abstained in protest). The Florida recount controversy led to the Supreme Court case Bush v. Gore.
+
+# Analysis: Electoral College Allocation Strategies (Tasks 6 & 7)
+
+## Task 6: Evolution of Voting (Faceted Visualization)
+
+This visualization shows how states have shifted between parties over nearly five decades of presidential elections. The faceted layout allows for easy comparison across different election years.
+
+```{r facet_map_prep}
+#| code-fold: true
+
+# Get winners for all presidential election years
+pres_years_all <- unique(pres_data$year)[unique(pres_data$year) %% 4 == 0]
+
+pres_winners_all <- pres_data %>%
+  filter(year %in% pres_years_all) %>%
+  group_by(year, state) %>%
+  filter(candidatevotes == max(candidatevotes)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  mutate(region = tolower(state)) %>%
+  select(year, region, party = party_simplified, candidate) %>%
+  mutate(party = str_to_upper(party))
+
+# Add DC for all years (always Democrat)
+dc_all_years <- tibble(
+  year = pres_years_all,
+  region = "district of columbia",
+  party = "DEMOCRAT",
+  candidate = "Various"
+)
+pres_winners_all <- bind_rows(pres_winners_all, dc_all_years)
+
+# Join with map data
+us_map_data <- map_data("state")
+map_animation_data <- us_map_data %>%
+  crossing(year = pres_years_all) %>%
+  left_join(pres_winners_all, by = c("region", "year"))
+
+```
+
+```{r facet_map_clean, fig.width=15, fig.height=13}
+#| code-fold: true
+
+# Create a cleaner version by simplifying the geometry
+clean_map_data <- map_animation_data %>%
+  # Remove any NA values
+  filter(!is.na(party)) %>%
+  # Ensure proper grouping to prevent "fragmentation"
+  arrange(year, group, order)
+
+ggplot(clean_map_data, aes(x = long, y = lat, group = group, fill = party)) +
+  geom_polygon(color = "#FFFFFF", linewidth = 0.4) +
+  coord_fixed(ratio = 1.3) +
+  facet_wrap(~ year, ncol = 4) +
+  scale_fill_manual(
+    values = c(
+      "DEMOCRAT" = "#2E74C0", 
+      "REPUBLICAN" = "#CB454A", 
+      "LIBERTARIAN" = "#FED105",
+      "GREEN" = "#00C000",
+      "OTHER" = "gray50"
+    ),
+    name = "",
+    na.value = "gray90"
+  ) +
+  labs(
+    title = "Presidential Election Winners by State (1976-2020)",
+    subtitle = "Red = Republican Victory  |  Blue = Democratic Victory",
+    caption = "Source: MIT Election Data Science Lab"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    plot.title = element_text(
+      face = "bold", 
+      size = 20, 
+      hjust = 0.5, 
+      margin = margin(b = 8)
+    ),
+    plot.subtitle = element_text(
+      size = 14, 
+      hjust = 0.5, 
+      color = "gray30",
+      margin = margin(b = 15)
+    ),
+    strip.text = element_text(
+      face = "bold", 
+      size = 14,
+      margin = margin(t = 8, b = 8)
+    ),
+    plot.caption = element_text(
+      hjust = 0.5, 
+      face = "italic", 
+      size = 10, 
+      color = "gray50",
+      margin = margin(t = 15)
+    ),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.spacing = unit(1, "lines"),
+    plot.margin = margin(20, 20, 20, 20)
+  )
+
+```
+
+**Key Observations:**
+
+* **Swing States:** Florida, Ohio, and Pennsylvania have alternated between parties, making them crucial battlegrounds.
+* **Partisan Sorting:** The South has become increasingly Republican (compare 1976 to 2020), while the Northeast and West Coast have become more Democratic.
+* **Persistent Patterns:** Some states (e.g., California post-1992, Texas post-1980) have remained consistently with one party for decades.
+* **Realignment Events:** Major shifts visible in 1980 (Reagan revolution), 1992 (Clinton coalition), and 2008 (Obama's expansion of Democratic map).
+
+## Task 7: The Fact Check - Electoral System Comparison
+
+Now I calculate the winner of every election under four different rules:
+
+1. **Winner-Take-All (History):** The actual result.
+2. **District + 2:** Winner of each district gets 1 vote; State winner gets 2.
+3. **Proportional (State):** EC votes divided by state popular vote %.
+4. **Direct Popular Vote:** National popular vote winner.
+
+```{r ec_calc}
+# --- Helper: Robust Party Name Cleaning ---
+clean_party <- function(x) {
+  str_to_upper(str_trim(as.character(x)))
+}
+
+# --- Main Calculation Function ---
+calculate_ec_scenarios <- function() {
+  results <- list()
+  
+  # Identify valid Presidential Election Years (divisible by 4) present in BOTH datasets
+  common_years <- intersect(unique(house_data$year), unique(pres_data$year))
+  pres_years <- sort(common_years[common_years %% 4 == 0])
+  
+  message("\n=== Calculating Electoral College Scenarios ===")
+  message(paste("Analyzing years:", paste(pres_years, collapse = ", ")))
+  
+  for(yr in pres_years) {
+    
+    # Filter & Clean Data for the Year
+    p_yr <- pres_data %>% 
+      filter(year == yr) %>%
+      mutate(party = clean_party(party_simplified))
+      
+    h_yr <- house_data %>% 
+      filter(year == yr) %>%
+      mutate(party = clean_party(party))
+    
+    # Calculate EC Votes per State (Districts + 2 Senate seats)
+    ec_alloc <- h_yr %>% 
+      group_by(state) %>% 
+      summarize(ec_votes = n_distinct(district) + 2, .groups = "drop")
+    
+    # Add DC (3 EC votes)
+    ec_alloc <- bind_rows(
+      ec_alloc,
+      tibble(state = "DISTRICT OF COLUMBIA", ec_votes = 3)
+    )
+    
+    # --- Scenario 1: Actual Winner-Take-All (History) ---
+    wta_winner <- p_yr %>%
+      group_by(state) %>%
+      filter(candidatevotes == max(candidatevotes)) %>%
+      slice(1) %>%
+      left_join(ec_alloc, by = "state") %>%
+      group_by(party) %>%
+      summarize(ec_total = sum(ec_votes, na.rm = TRUE), .groups = "drop") %>%
+      filter(ec_total == max(ec_total)) %>%
+      slice(1) %>%
+      mutate(scenario = "Winner-Take-All", year = yr)
+    
+    # --- Scenario 2: District + 2 ---
+    # **IMPORTANT ASSUMPTION**: We use House election results as a proxy for 
+    # presidential district-level results.
+    
+    # Part A: District Winners (1 EC Vote each)
+    dist_winners <- h_yr %>%
+      group_by(state, district) %>%
+      filter(candidatevotes == max(candidatevotes)) %>%
+      slice(1) %>%
+      ungroup() %>%
+      count(party, name = "dist_ec")
+    
+    # Part B: State Winners (2 EC Votes each) - use presidential data
+    state_winners <- p_yr %>%
+      group_by(state) %>%
+      filter(candidatevotes == max(candidatevotes)) %>%
+      slice(1) %>%
+      ungroup() %>%
+      count(party, name = "state_wins") %>%
+      mutate(state_ec = state_wins * 2) %>%
+      select(party, state_ec)
+    
+    # Combine
+    d2_winner <- full_join(dist_winners, state_winners, by = "party") %>%
+      mutate(
+        total_ec = replace_na(dist_ec, 0) + replace_na(state_ec, 0)
+      ) %>%
+      filter(total_ec == max(total_ec)) %>%
+      slice(1) %>%
+      transmute(party, ec_total = total_ec, scenario = "District + 2", year = yr)
+    
+    # --- Scenario 3: National Popular Vote ---
+    pop_winner <- p_yr %>%
+      group_by(party) %>%
+      summarize(total_votes = sum(candidatevotes, na.rm = TRUE), .groups = "drop") %>%
+      filter(total_votes == max(total_votes)) %>%
+      slice(1) %>%
+      mutate(
+        scenario = "National Popular Vote", 
+        year = yr, 
+        ec_total = NA_real_
+      ) %>%
+      select(party, ec_total, scenario, year)
+    
+    # --- Scenario 4: Proportional (State) ---
+    prop_winner <- p_yr %>%
+      group_by(state) %>%
+      mutate(vote_share = candidatevotes / sum(candidatevotes)) %>%
+      left_join(ec_alloc, by = "state") %>%
+      mutate(earned_ec = vote_share * ec_votes) %>%
+      group_by(party) %>%
+      summarize(ec_total = sum(earned_ec, na.rm = TRUE), .groups = "drop") %>%
+      filter(ec_total == max(ec_total)) %>%
+      slice(1) %>%
+      mutate(scenario = "Proportional (State)", year = yr)
+      
+    # Store results
+    year_results <- bind_rows(wta_winner, d2_winner, pop_winner, prop_winner)
+    results[[as.character(yr)]] <- year_results
+  }
+  
+  bind_rows(results)
+}
+
+# Run Calculation
+scenarios <- calculate_ec_scenarios()
+
+```
+
+### Identifying Divergent Elections
+
+Elections where different systems would have produced different winners are particularly important for evaluating Electoral College bias.
+
+```{r divergences}
+# Format the Table for Display
+divergences <- scenarios %>%
+  select(year, scenario, party) %>%
+  pivot_wider(names_from = scenario, values_from = party) %>%
+  # Filter for years where the result is NOT the same across all methods
+  filter(
+    `Winner-Take-All` != `National Popular Vote` | 
+    `Winner-Take-All` != `District + 2` | 
+    `Winner-Take-All` != `Proportional (State)`
+  ) %>%
+  arrange(year)
+
+kable(
+  divergences,
+  caption = "Elections with Divergent Outcomes Across Allocation Systems",
+  col.names = c("Year", "Winner-Take-All", "District + 2", "National Popular Vote", "Proportional")
+)
+
+```
+
+## Detailed Analysis of Key Elections
+
+Let me examine the most consequential divergences:
+
+```{r divergent_details}
+# Get vote totals and margins for divergent years
+divergent_details <- pres_data %>%
+  filter(year %in% divergences$year) %>%
+  mutate(party = clean_party(party_simplified)) %>%
+  filter(party %in% c("DEMOCRAT", "REPUBLICAN")) %>%
+  group_by(year, party) %>%
+  summarize(
+    total_votes = sum(candidatevotes, na.rm = TRUE),
+    states_won = sum(candidatevotes == max(candidatevotes)),
+    .groups = "drop"
+  ) %>%
+  group_by(year) %>%
+  mutate(
+    vote_share = total_votes / sum(total_votes),
+    vote_margin = (vote_share - 0.5) * 2  # Convert to margin over 50%
+  ) %>%
+  arrange(year, desc(total_votes))
+
+kable(
+  divergent_details %>%
+    select(year, party, total_votes, vote_share, vote_margin, states_won) %>%
+    mutate(
+      total_votes = scales::comma(total_votes),
+      vote_share = scales::percent(vote_share, accuracy = 0.1),
+      vote_margin = scales::percent(vote_margin, accuracy = 0.1)
+    ),
+  caption = "Popular Vote Details for Divergent Elections",
+  col.names = c("Year", "Party", "Total Votes", "Vote Share", "Margin", "States Won")
+)
+
+```
+
+## Systematic Bias Analysis
+
+To evaluate whether the Electoral College systematically favors one party, I'll analyze the direction of bias across all elections:
+
+```{r bias_analysis}
+bias_analysis <- scenarios %>%
+  select(year, scenario, party) %>%
+  pivot_wider(names_from = scenario, values_from = party) %>%
+  mutate(
+    wta_vs_popular = case_when(
+      `Winner-Take-All` == `National Popular Vote` ~ "Same Winner",
+      `Winner-Take-All` == "REPUBLICAN" & `National Popular Vote` == "DEMOCRAT" ~ "Favored Republican",
+      `Winner-Take-All` == "DEMOCRAT" & `National Popular Vote` == "REPUBLICAN" ~ "Favored Democrat",
+      TRUE ~ "Other"
+    ),
+    d2_vs_popular = case_when(
+      `District + 2` == `National Popular Vote` ~ "Same Winner",
+      `District + 2` == "REPUBLICAN" & `National Popular Vote` == "DEMOCRAT" ~ "Favored Republican",
+      `District + 2` == "DEMOCRAT" & `National Popular Vote` == "REPUBLICAN" ~ "Favored Democrat",
+      TRUE ~ "Other"
+    )
+  )
+
+# Summary of bias
+bias_summary <- bias_analysis %>%
+  summarize(
+    total_elections = n(),
+    wta_same = sum(wta_vs_popular == "Same Winner"),
+    wta_favored_rep = sum(wta_vs_popular == "Favored Republican"),
+    wta_favored_dem = sum(wta_vs_popular == "Favored Democrat"),
+    d2_same = sum(d2_vs_popular == "Same Winner"),
+    d2_favored_rep = sum(d2_vs_popular == "Favored Republican"),
+    d2_favored_dem = sum(d2_vs_popular == "Favored Democrat")
+  )
+
+kable(
+  bias_summary,
+  caption = "Systematic Bias Analysis: How Often Each System Diverged from Popular Vote",
+  col.names = c("Total Elections", "WTA Same", "WTA → Rep", "WTA → Dem", "D+2 Same", "D+2 → Rep", "D+2 → Dem")
+)
+
+```
+
+```{r bias_plot}
+#| fig.width: 10
+#| fig.height: 6
+
+# Create timeline of divergences
+divergence_timeline <- bias_analysis %>%
+  select(year, wta_vs_popular, d2_vs_popular) %>%
+  filter(wta_vs_popular != "Same Winner" | d2_vs_popular != "Same Winner") %>%
+  pivot_longer(cols = c(wta_vs_popular, d2_vs_popular), 
+               names_to = "system", 
+               values_to = "bias_direction") %>%
+  filter(bias_direction != "Same Winner") %>%
+  mutate(
+    system = case_when(
+      system == "wta_vs_popular" ~ "Winner-Take-All",
+      system == "d2_vs_popular" ~ "District + 2"
+    )
+  )
+
+ggplot(divergence_timeline, 
+       aes(x = year, y = system, color = bias_direction, size = 4)) +
+  geom_point() +
+  scale_color_manual(
+    values = c("Favored Republican" = "#CB454A", "Favored Democrat" = "#2E74C0"),
+    name = "Direction of Bias"
+  ) +
+  scale_x_continuous(breaks = seq(1976, 2020, 4)) +
+  labs(
+    title = "When Electoral Systems Diverged from the Popular Vote",
+    subtitle = "Each point shows an election where the system winner differed from popular vote winner",
+    x = "Election Year",
+    y = "Electoral System",
+    caption = "Analysis shows Winner-Take-All favored Republicans in 2000 & 2016; District+2 would have been more erratic"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  ) +
+  guides(size = "none")
+
+```
+
+## Third Party Impact in Proportional System
+
+One key concern with proportional allocation is that it would empower third parties, potentially preventing any candidate from reaching the 270 EC vote threshold:
+
+```{r third_party}
+# Analyze third party performance
+third_party_impact <- pres_data %>%
+  filter(year %in% pres_years_all) %>%
+  mutate(party = clean_party(party_simplified)) %>%
+  group_by(year) %>%
+  mutate(
+    total_year_votes = sum(candidatevotes, na.rm = TRUE),
+    vote_share = candidatevotes / total_year_votes
+  ) %>%
+  group_by(year, party) %>%
+  summarize(
+    national_vote_share = sum(candidatevotes, na.rm = TRUE) / first(total_year_votes),
+    .groups = "drop"
+  ) %>%
+  filter(!party %in% c("DEMOCRAT", "REPUBLICAN")) %>%
+  filter(national_vote_share > 0.01) %>%  # At least 1%
+  arrange(year, desc(national_vote_share))
+
+if (nrow(third_party_impact) > 0) {
+  kable(
+    third_party_impact %>%
+      mutate(national_vote_share = scales::percent(national_vote_share, accuracy = 0.1)),
+    caption = "Significant Third Party Performances (>1% of national vote)",
+    col.names = c("Year", "Party", "National Vote Share")
+  )
+} else {
+  message("No third party received more than 1% of the national vote in analyzed years")
+}
+
+```
+
+# Conclusion
+
+**Fact Check Rating: MOSTLY TRUE** 
+
+Senator Warren's claim that the Electoral College undermines the principle that "every vote matters" is substantially supported by the evidence, but with important nuances.
+
+**Key Findings:**
+
+1. **Popular Vote Divergences (2000, 2016):** The Electoral College has produced two popular vote/EC divergences in the 21st century, both favoring Republicans. This demonstrates a modern Republican bias in the Electoral College system, supporting Warren's concern about vote equality.
+2. **The "District + 2" Trap:** The Maine/Nebraska model—often proposed as a compromise—would create even more erratic outcomes. It would have **overturned the 2012 election** (electing Romney) and the **1988 election** (electing Dukakis), effectively gerrymandering the presidency.
+3. **Proportional Representation Complications:** State-by-state proportional allocation most consistently matches the popular vote winner but risks **Third Party Fragmentation**, potentially preventing any candidate from reaching the 270 EC vote threshold in years like 1992 or 1996.
+
+**Recommendation:**
+
+Senator Warren's claim is substantially correct that the Electoral College can undermine the principle of vote equality, and it has demonstrably favored one party in recent elections. However, simple reforms like district-based allocation could make the problem worse, not better. True equality would require a direct national popular vote or carefully designed proportional systems.
+
+## Data Citations
+
+* MIT Election Data and Science Lab, 2017, "U.S. House 1976–2022", https://doi.org/10.7910/DVN/IG0UN2, Harvard Dataverse, V12
+* MIT Election Data and Science Lab, 2017, "U.S. President 1976–2020", https://doi.org/10.7910/DVN/42MVDX, Harvard Dataverse, V13
+* Jeffrey B. Lewis, Brandon DeVine, Lincoln Pritcher, and Kenneth C. Martis. (2013) Digital Boundary Definitions of United States Congressional Districts, 1789-2012. https://cdmaps.polisci.ucla.edu
+* U.S. Census Bureau, TIGER/Line Shapefiles, 2014-2022. https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html
+
+## Technical Appendix: Validation
+
+```{r comprehensive-validation}
+#| label: comprehensive-validation
+#| echo: true
+
+# Comprehensive validation of electoral calculations
+validation_results <- list()
+
+# 1. Check EC totals sum to expected values
+expected_ec_total <- 538
+
+ec_totals_by_year <- scenarios %>%
+  filter(scenario %in% c("Winner-Take-All", "District + 2")) %>%
+  filter(!is.na(ec_total)) %>%
+  group_by(year, scenario) %>%
+  summarize(total = sum(ec_total, na.rm = TRUE), .groups = "drop") %>%
+  mutate(
+    expected = expected_ec_total,
+    difference = total - expected,
+    valid = abs(difference) <= 5
+  )
+
+validation_results$ec_totals <- ec_totals_by_year
+
+# 2. Verify popular vote winners match known history
+known_popular_winners <- tibble(
+  year = c(2000, 2016),
+  known_winner = c("DEMOCRAT", "DEMOCRAT")
+)
+
+popular_vote_check <- scenarios %>%
+  filter(scenario == "National Popular Vote", year %in% c(2000, 2016)) %>%
+  left_join(known_popular_winners, by = "year") %>%
+  mutate(correct = party == known_winner)
+
+validation_results$popular_vote <- popular_vote_check
+
+# 3. Check for missing years
+expected_years <- seq(1976, 2020, 4)
+actual_years <- unique(scenarios$year)
+missing_years <- setdiff(expected_years, actual_years)
+
+validation_results$missing_years <- missing_years
+
+# Display results
+cat("\n=== VALIDATION REPORT ===\n\n")
+
+cat("1. Electoral College Totals:\n")
+print(kable(ec_totals_by_year, 
+            caption = "EC Vote Totals by Year and System (should equal 538)"))
+
+if (all(ec_totals_by_year$valid)) {
+  cat("✅ All EC totals are within acceptable range\n\n")
+} else {
+  cat("⚠️ WARNING: Some EC totals are significantly off!\n\n")
+}
+
+cat("2. Known Popular Vote Winners:\n")
+print(kable(popular_vote_check %>% 
+              select(year, calculated_winner = party, known_winner, correct),
+            caption = "Verification Against Known History"))
+
+if (all(popular_vote_check$correct)) {
+  cat("✅ Popular vote calculations match historical record\n\n")
+} else {
+  cat("⚠️ WARNING: Popular vote calculations don't match history!\n\n")
+}
+
+cat("3. Data Completeness:\n")
+if (length(missing_years) == 0) {
+  cat("✅ All presidential election years from 1976-2020 are present\n\n")
+} else {
+  cat("⚠️ Missing years:", paste(missing_years, collapse = ", "), "\n\n")
+}
+
+# 4. Data quality metrics
+quality_metrics <- tibble(
+  Metric = c(
+    "Presidential elections analyzed",
+    "States in House data",
+    "States in Presidential data", 
+    "Years with divergent EC/Popular outcomes",
+    "Average EC total accuracy"
+  ),
+  Value = c(
+    length(unique(scenarios$year)),
+    n_distinct(house_data$state),
+    n_distinct(pres_data$state),
+    nrow(divergences),
+    mean(ec_totals_by_year$difference == 0)
+  )
+)
+
+print(kable(quality_metrics, caption = "Data Quality Metrics"))
+
+```

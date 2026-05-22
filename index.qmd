@@ -4,7 +4,13 @@ title: "Yashvi Mittal"
 
 Hi! I'm **Yashvi Mittal**, a Master's student at **Baruch College**.
 This site collects my coursework and mini-projects for STA 9750
-(Software Tools for Data Analysis), Spring 2026.
+(Software Tools for Data Analysis), Fall 2025.
+
+## Projects
+
+- [**Mini-Project: The Electoral College**](mp3.html) — analysis of U.S. presidential and House election data, 1976-2024.
+- [**Mini-Project: The Ultimate Playlist**](playlistmp.html) — data-driven playlist curation from song characteristics and user-generated playlists.
+- [**Individual Project: CUNY Retirement Plan Analysis**](InteractiveMonteCarlo.html) — Monte Carlo decision support for new CUNY faculty choosing between retirement plans.
 
 ```{r}
 #| echo: false
