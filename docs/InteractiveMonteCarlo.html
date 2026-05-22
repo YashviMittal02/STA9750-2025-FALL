@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yashvi Mittal">
+<meta name="dcterms.date" content="2025-12-18">
+
+<title>CUNY Retirement Plan Analysis: A Monte Carlo Approach</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="InteractiveMonteCarlo_files/libs/clipboard/clipboard.min.js"></script>
+<script src="InteractiveMonteCarlo_files/libs/quarto-html/quarto.js"></script>
+<script src="InteractiveMonteCarlo_files/libs/quarto-html/popper.min.js"></script>
+<script src="InteractiveMonteCarlo_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="InteractiveMonteCarlo_files/libs/quarto-html/anchor.min.js"></script>
+<link href="InteractiveMonteCarlo_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="InteractiveMonteCarlo_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="InteractiveMonteCarlo_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="InteractiveMonteCarlo_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="InteractiveMonteCarlo_files/libs/bootstrap/bootstrap-32162a2fca7cb0439643f2faaab1edf3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="InteractiveMonteCarlo_files/libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+
+<script src="InteractiveMonteCarlo_files/libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+
+<script src="InteractiveMonteCarlo_files/libs/plotly-binding-4.11.0/plotly.js"></script>
+
+<script src="InteractiveMonteCarlo_files/libs/typedarray-0.1/typedarray.min.js"></script>
+
+<script src="InteractiveMonteCarlo_files/libs/jquery-3.5.1/jquery.min.js"></script>
+
+<link href="InteractiveMonteCarlo_files/libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+
+<script src="InteractiveMonteCarlo_files/libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+
+<link href="InteractiveMonteCarlo_files/libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet">
+
+<script src="InteractiveMonteCarlo_files/libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#summary" id="toc-summary" class="nav-link active" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#data-acquisition" id="toc-data-acquisition" class="nav-link" data-scroll-target="#data-acquisition">Data Acquisition</a></li>
+  <li><a href="#data-processing" id="toc-data-processing" class="nav-link" data-scroll-target="#data-processing">Data Processing</a></li>
+  <li><a href="#retirement-plan-logic" id="toc-retirement-plan-logic" class="nav-link" data-scroll-target="#retirement-plan-logic">Retirement Plan Logic</a></li>
+  <li><a href="#monte-carlo-simulation" id="toc-monte-carlo-simulation" class="nav-link" data-scroll-target="#monte-carlo-simulation">Monte Carlo Simulation</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  <li><a href="#recommendation" id="toc-recommendation" class="nav-link" data-scroll-target="#recommendation">Recommendation</a></li>
+  <li><a href="#sensitivity-analysis" id="toc-sensitivity-analysis" class="nav-link" data-scroll-target="#sensitivity-analysis">Sensitivity Analysis</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">CUNY Retirement Plan Analysis: A Monte Carlo Approach</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+<p class="subtitle lead">Data-Driven Decision Support for New Faculty</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yashvi Mittal </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 18, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>This analysis evaluates CUNY’s two retirement plans: the defined-benefit Teachers Retirement System (TRS) and the defined-contribution Optional Retirement Plan (ORP). Using Monte Carlo simulation with bootstrap resampling of historical market data, we compare long-term financial outcomes to assist new faculty in making this permanent decision.</p>
+</section>
+<section id="data-acquisition" class="level2">
+<h2 class="anchored" data-anchor-id="data-acquisition">Data Acquisition</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>get_fred_series <span class="ot">&lt;-</span> <span class="cf">function</span>(series_id, api_key, <span class="at">start_date =</span> <span class="st">"2004-01-01"</span>) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">request</span>(<span class="st">"https://api.stlouisfed.org/fred/series/observations"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">req_url_query</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">series_id =</span> series_id,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">api_key =</span> <span class="fu">as.character</span>(api_key)[<span class="dv">1</span>],</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">file_type =</span> <span class="st">"json"</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">observation_start =</span> start_date</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">req_retry</span>(<span class="at">max_tries =</span> <span class="dv">3</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">req_perform</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">resp_body_json</span>(<span class="at">simplifyVector =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pluck</span>(<span class="st">"observations"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">floor_date</span>(<span class="fu">ymd</span>(date), <span class="st">"month"</span>),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">value =</span> <span class="fu">as.numeric</span>(value)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">drop_na</span>()</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>get_alphavantage_monthly <span class="ot">&lt;-</span> <span class="cf">function</span>(symbol, api_key) {</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Sys.sleep</span>(<span class="dv">15</span>)  <span class="co"># Rate limit: 5 calls/min</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">request</span>(<span class="st">"https://www.alphavantage.co/query"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">req_url_query</span>(</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">function</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"TIME_SERIES_MONTHLY_ADJUSTED"</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">symbol =</span> symbol,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">apikey =</span> <span class="fu">as.character</span>(api_key)[<span class="dv">1</span>]</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">req_retry</span>(<span class="at">max_tries =</span> <span class="dv">3</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">req_perform</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">resp_body_json</span>()</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(resp<span class="sc">$</span>Note) <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.null</span>(resp<span class="sc">$</span><span class="st">`</span><span class="at">Error Message</span><span class="st">`</span>)) {</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"AlphaVantage Error: "</span>, resp<span class="sc">$</span>Note, resp<span class="sc">$</span><span class="st">`</span><span class="at">Error Message</span><span class="st">`</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>  resp<span class="sc">$</span><span class="st">`</span><span class="at">Monthly Adjusted Time Series</span><span class="st">`</span> <span class="sc">|&gt;</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_dfr</span>(<span class="sc">~</span><span class="fu">as.numeric</span>(.x<span class="sc">$</span><span class="st">`</span><span class="at">5. adjusted close</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">"date"</span>, <span class="at">values_to =</span> <span class="st">"adjusted_close"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">floor_date</span>(<span class="fu">ymd</span>(date), <span class="st">"month"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">monthly_return =</span> (adjusted_close <span class="sc">/</span> <span class="fu">lag</span>(adjusted_close)) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">drop_na</span>() <span class="sc">|&gt;</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(date, monthly_return)</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="data-processing" class="level2">
+<h2 class="anchored" data-anchor-id="data-processing">Data Processing</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Economic indicators from FRED</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>cpi_data <span class="ot">&lt;-</span> <span class="fu">get_fred_series</span>(<span class="st">"CPIAUCSL"</span>, fred_key)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>wage_data <span class="ot">&lt;-</span> <span class="fu">get_fred_series</span>(<span class="st">"CES0500000003"</span>, fred_key)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>treasury_data <span class="ot">&lt;-</span> <span class="fu">get_fred_series</span>(<span class="st">"DGS2"</span>, fred_key)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Market data from AlphaVantage</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>market_data <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">us =</span> <span class="fu">get_alphavantage_monthly</span>(<span class="st">"VTI"</span>, alpha_key),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">intl =</span> <span class="fu">get_alphavantage_monthly</span>(<span class="st">"VXUS"</span>, alpha_key),</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">bond =</span> <span class="fu">get_alphavantage_monthly</span>(<span class="st">"BND"</span>, alpha_key)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine all data</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>combined_monthly_data <span class="ot">&lt;-</span> cpi_data <span class="sc">|&gt;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date) <span class="sc">|&gt;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cpi_monthly_change =</span> value <span class="sc">/</span> <span class="fu">lag</span>(value) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(date, cpi_monthly_change) <span class="sc">|&gt;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    wage_data <span class="sc">|&gt;</span> </span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrange</span>(date) <span class="sc">|&gt;</span> </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">wage_monthly_change =</span> value <span class="sc">/</span> <span class="fu">lag</span>(value) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(date, wage_monthly_change),</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"date"</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    treasury_data <span class="sc">|&gt;</span> </span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrange</span>(date) <span class="sc">|&gt;</span> </span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">treasury_monthly_return =</span> value <span class="sc">/</span> <span class="dv">100</span> <span class="sc">/</span> <span class="dv">12</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(date, treasury_monthly_return),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"date"</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(market_data<span class="sc">$</span>us <span class="sc">|&gt;</span> <span class="fu">rename</span>(<span class="at">us_equity_return =</span> monthly_return), <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(market_data<span class="sc">$</span>intl <span class="sc">|&gt;</span> <span class="fu">rename</span>(<span class="at">intl_equity_return =</span> monthly_return), <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(market_data<span class="sc">$</span>bond <span class="sc">|&gt;</span> <span class="fu">rename</span>(<span class="at">bond_return =</span> monthly_return), <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">|&gt;</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">&gt;=</span> <span class="fu">max</span>(date) <span class="sc">-</span> <span class="fu">years</span>(<span class="dv">20</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(date, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>combined_monthly_data <span class="sc">|&gt;</span> </span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_tail</span>(<span class="at">n =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_percent</span>(<span class="at">columns =</span> <span class="sc">-</span>date) <span class="sc">|&gt;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(<span class="at">title =</span> <span class="st">"Historical Monthly Economic Data (Recent)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="rvibcrkwie" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#rvibcrkwie table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#rvibcrkwie thead, #rvibcrkwie tbody, #rvibcrkwie tfoot, #rvibcrkwie tr, #rvibcrkwie td, #rvibcrkwie th {
+  border-style: none;
+}
+
+#rvibcrkwie p {
+  margin: 0;
+  padding: 0;
+}
+
+#rvibcrkwie .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#rvibcrkwie .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#rvibcrkwie .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#rvibcrkwie .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#rvibcrkwie .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#rvibcrkwie .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#rvibcrkwie .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#rvibcrkwie .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#rvibcrkwie .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#rvibcrkwie .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#rvibcrkwie .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#rvibcrkwie .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#rvibcrkwie .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#rvibcrkwie .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#rvibcrkwie .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#rvibcrkwie .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#rvibcrkwie .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#rvibcrkwie .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#rvibcrkwie .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#rvibcrkwie .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#rvibcrkwie .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#rvibcrkwie .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#rvibcrkwie .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#rvibcrkwie .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#rvibcrkwie .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#rvibcrkwie .gt_left {
+  text-align: left;
+}
+
+#rvibcrkwie .gt_center {
+  text-align: center;
+}
+
+#rvibcrkwie .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#rvibcrkwie .gt_font_normal {
+  font-weight: normal;
+}
+
+#rvibcrkwie .gt_font_bold {
+  font-weight: bold;
+}
+
+#rvibcrkwie .gt_font_italic {
+  font-style: italic;
+}
+
+#rvibcrkwie .gt_super {
+  font-size: 65%;
+}
+
+#rvibcrkwie .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#rvibcrkwie .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#rvibcrkwie .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#rvibcrkwie .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#rvibcrkwie .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#rvibcrkwie .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#rvibcrkwie .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#rvibcrkwie .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#rvibcrkwie div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_heading header">
+<th colspan="7" class="gt_heading gt_title gt_font_normal gt_bottom_border">Historical Monthly Economic Data (Recent)</th>
+</tr>
+<tr class="gt_col_headings even">
+<th id="date" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">date</th>
+<th id="cpi_monthly_change" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">cpi_monthly_change</th>
+<th id="wage_monthly_change" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">wage_monthly_change</th>
+<th id="treasury_monthly_return" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">treasury_monthly_return</th>
+<th id="us_equity_return" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">us_equity_return</th>
+<th id="intl_equity_return" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">intl_equity_return</th>
+<th id="bond_return" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">bond_return</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_right" headers="date">2025-06-01</td>
+<td class="gt_row gt_right" headers="cpi_monthly_change">0.29%</td>
+<td class="gt_row gt_right" headers="wage_monthly_change">0.22%</td>
+<td class="gt_row gt_right" headers="treasury_monthly_return">0.33%</td>
+<td class="gt_row gt_right" headers="us_equity_return">5.16%</td>
+<td class="gt_row gt_right" headers="intl_equity_return">3.96%</td>
+<td class="gt_row gt_right" headers="bond_return">1.52%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="date">2025-07-01</td>
+<td class="gt_row gt_right" headers="cpi_monthly_change">0.20%</td>
+<td class="gt_row gt_right" headers="wage_monthly_change">0.33%</td>
+<td class="gt_row gt_right" headers="treasury_monthly_return">0.32%</td>
+<td class="gt_row gt_right" headers="us_equity_return">2.29%</td>
+<td class="gt_row gt_right" headers="intl_equity_return">−0.90%</td>
+<td class="gt_row gt_right" headers="bond_return">−0.26%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="date">2025-08-01</td>
+<td class="gt_row gt_right" headers="cpi_monthly_change">0.38%</td>
+<td class="gt_row gt_right" headers="wage_monthly_change">0.41%</td>
+<td class="gt_row gt_right" headers="treasury_monthly_return">0.31%</td>
+<td class="gt_row gt_right" headers="us_equity_return">2.35%</td>
+<td class="gt_row gt_right" headers="intl_equity_return">4.24%</td>
+<td class="gt_row gt_right" headers="bond_return">1.15%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="date">2025-09-01</td>
+<td class="gt_row gt_right" headers="cpi_monthly_change">0.31%</td>
+<td class="gt_row gt_right" headers="wage_monthly_change">0.19%</td>
+<td class="gt_row gt_right" headers="treasury_monthly_return">0.30%</td>
+<td class="gt_row gt_right" headers="us_equity_return">3.42%</td>
+<td class="gt_row gt_right" headers="intl_equity_return">3.43%</td>
+<td class="gt_row gt_right" headers="bond_return">1.11%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="date">2025-11-01</td>
+<td class="gt_row gt_right" headers="cpi_monthly_change">0.20%</td>
+<td class="gt_row gt_right" headers="wage_monthly_change">0.14%</td>
+<td class="gt_row gt_right" headers="treasury_monthly_return">0.30%</td>
+<td class="gt_row gt_right" headers="us_equity_return">0.27%</td>
+<td class="gt_row gt_right" headers="intl_equity_return">0.42%</td>
+<td class="gt_row gt_right" headers="bond_return">0.60%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cor_mat <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">select</span>(combined_monthly_data, <span class="sc">-</span>date))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">colnames</span>(cor_mat), </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">colnames</span>(cor_mat), </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">z =</span> cor_mat, </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"heatmap"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">colors =</span> <span class="fu">colorRamp</span>(<span class="fu">c</span>(<span class="st">"#D55E00"</span>, <span class="st">"white"</span>, <span class="st">"#0072B2"</span>))</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> </span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">layout</span>(<span class="at">title =</span> <span class="st">"Correlation Matrix of Monthly Returns"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-526563c03d033d0b6409" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-526563c03d033d0b6409">{"x":{"visdat":{"5ea424cc1bbb":["function () ","plotlyVisDat"]},"cur_data":"5ea424cc1bbb","attrs":{"5ea424cc1bbb":{"x":["cpi_monthly_change","wage_monthly_change","treasury_monthly_return","us_equity_return","intl_equity_return","bond_return"],"y":["cpi_monthly_change","wage_monthly_change","treasury_monthly_return","us_equity_return","intl_equity_return","bond_return"],"z":[[1,-0.15355491954061015,0.07647721585046946,0.0040721840898257696,0.021834946596599351,-0.24555049373943175],[-0.15355491954061015,1,0.081617261227123983,0.1670144758064856,0.10054430254596568,0.10902851674803921],[0.07647721585046946,0.081617261227123983,1,-0.014658311333156579,0.030782588493226435,0.050540936869976773],[0.0040721840898257696,0.1670144758064856,-0.014658311333156579,1,0.84630344749191133,0.31823506292280435],[0.021834946596599351,0.10054430254596568,0.030782588493226435,0.84630344749191133,1,0.37170985141884932],[-0.24555049373943175,0.10902851674803921,0.050540936869976773,0.31823506292280435,0.37170985141884932,1]],"colors":["function (x) ","roundcolor(cbind(palette[[1L]](x), palette[[2L]](x), palette[[3L]](x), ","    if (alpha) palette[[4L]](x))) * 255"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"heatmap"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Correlation Matrix of Monthly Returns","xaxis":{"domain":[0,1],"automargin":true,"title":[]},"yaxis":{"domain":[0,1],"automargin":true,"title":[]},"scene":{"zaxis":{"title":[]}},"hovermode":"closest","showlegend":false,"legend":{"yanchor":"top","y":0.5}},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"colorbar":{"title":"","ticklen":2,"len":0.5,"lenmode":"fraction","y":1,"yanchor":"top"},"colorscale":[["0","rgba(213,94,0,1)"],["0.0416666666666667","rgba(216,107,21,1)"],["0.0833333333333333","rgba(220,121,42,1)"],["0.125","rgba(224,134,64,1)"],["0.166666666666667","rgba(227,148,85,1)"],["0.208333333333333","rgba(230,161,106,1)"],["0.25","rgba(234,174,128,1)"],["0.291666666666667","rgba(238,188,149,1)"],["0.333333333333333","rgba(241,201,170,1)"],["0.375","rgba(244,215,191,1)"],["0.416666666666667","rgba(248,228,212,1)"],["0.458333333333333","rgba(252,242,234,1)"],["0.5","rgba(255,255,255,1)"],["0.541666666666667","rgba(234,243,249,1)"],["0.583333333333333","rgba(212,232,242,1)"],["0.625","rgba(191,220,236,1)"],["0.666666666666667","rgba(170,208,229,1)"],["0.708333333333333","rgba(149,196,223,1)"],["0.75","rgba(128,184,216,1)"],["0.791666666666667","rgba(106,173,210,1)"],["0.833333333333333","rgba(85,161,204,1)"],["0.875","rgba(64,149,197,1)"],["0.916666666666667","rgba(43,138,191,1)"],["0.958333333333333","rgba(21,126,184,1)"],["1","rgba(0,114,178,1)"]],"showscale":true,"x":["cpi_monthly_change","wage_monthly_change","treasury_monthly_return","us_equity_return","intl_equity_return","bond_return"],"y":["cpi_monthly_change","wage_monthly_change","treasury_monthly_return","us_equity_return","intl_equity_return","bond_return"],"z":[[1,-0.15355491954061015,0.07647721585046946,0.0040721840898257696,0.021834946596599351,-0.24555049373943175],[-0.15355491954061015,1,0.081617261227123983,0.1670144758064856,0.10054430254596568,0.10902851674803921],[0.07647721585046946,0.081617261227123983,1,-0.014658311333156579,0.030782588493226435,0.050540936869976773],[0.0040721840898257696,0.1670144758064856,-0.014658311333156579,1,0.84630344749191133,0.31823506292280435],[0.021834946596599351,0.10054430254596568,0.030782588493226435,0.84630344749191133,1,0.37170985141884932],[-0.24555049373943175,0.10902851674803921,0.050540936869976773,0.31823506292280435,0.37170985141884932,1]],"type":"heatmap","xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="retirement-plan-logic" class="level2">
+<h2 class="anchored" data-anchor-id="retirement-plan-logic">Retirement Plan Logic</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>calculate_trs_benefit <span class="ot">&lt;-</span> <span class="cf">function</span>(salary_history, retirement_month) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  fas <span class="ot">&lt;-</span> salary_history <span class="sc">|&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(month <span class="sc">&lt;=</span> retirement_month, month <span class="sc">&gt;</span> (retirement_month <span class="sc">-</span> <span class="dv">36</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarize</span>(<span class="at">fas =</span> <span class="fu">mean</span>(salary_annual)) <span class="sc">|&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(fas)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  years_service <span class="ot">&lt;-</span> retirement_month <span class="sc">/</span> <span class="dv">12</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  benefit_pct <span class="ot">&lt;-</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    years_service <span class="sc">&lt;</span> <span class="dv">20</span> <span class="sc">~</span> <span class="fl">0.0167</span> <span class="sc">*</span> years_service,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    years_service <span class="sc">==</span> <span class="dv">20</span> <span class="sc">~</span> <span class="fl">0.35</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fl">0.35</span> <span class="sc">+</span> <span class="fl">0.02</span> <span class="sc">*</span> (years_service <span class="sc">-</span> <span class="dv">20</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  benefit_pct <span class="sc">*</span> fas <span class="sc">/</span> <span class="dv">12</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>apply_trs_cola <span class="ot">&lt;-</span> <span class="cf">function</span>(current_benefit, annual_cpi) {</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  adj <span class="ot">&lt;-</span> <span class="fu">ceiling</span>((annual_cpi <span class="sc">*</span> <span class="fl">0.5</span> <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">*</span> <span class="dv">10</span>) <span class="sc">/</span> <span class="dv">10</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  adj <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(adj, <span class="fl">1.0</span>), <span class="fl">3.0</span>) <span class="sc">/</span> <span class="dv">100</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  current_benefit <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> adj)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>get_asset_allocation <span class="ot">&lt;-</span> <span class="cf">function</span>(age) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (age <span class="sc">&lt;</span> <span class="dv">50</span>) <span class="fu">list</span>(<span class="at">us =</span> <span class="fl">0.54</span>, <span class="at">intl =</span> <span class="fl">0.36</span>, <span class="at">bond =</span> <span class="fl">0.10</span>, <span class="at">short =</span> <span class="fl">0.00</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (age <span class="sc">&lt;</span> <span class="dv">60</span>) <span class="fu">list</span>(<span class="at">us =</span> <span class="fl">0.47</span>, <span class="at">intl =</span> <span class="fl">0.32</span>, <span class="at">bond =</span> <span class="fl">0.21</span>, <span class="at">short =</span> <span class="fl">0.00</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (age <span class="sc">&lt;</span> <span class="dv">75</span>) <span class="fu">list</span>(<span class="at">us =</span> <span class="fl">0.34</span>, <span class="at">intl =</span> <span class="fl">0.23</span>, <span class="at">bond =</span> <span class="fl">0.43</span>, <span class="at">short =</span> <span class="fl">0.00</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="fu">list</span>(<span class="at">us =</span> <span class="fl">0.19</span>, <span class="at">intl =</span> <span class="fl">0.13</span>, <span class="at">bond =</span> <span class="fl">0.62</span>, <span class="at">short =</span> <span class="fl">0.06</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>get_contribution_rate <span class="ot">&lt;-</span> <span class="cf">function</span>(salary) {</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (salary <span class="sc">&lt;=</span> <span class="dv">45000</span>) <span class="fl">0.03</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (salary <span class="sc">&lt;=</span> <span class="dv">55000</span>) <span class="fl">0.035</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (salary <span class="sc">&lt;=</span> <span class="dv">75000</span>) <span class="fl">0.045</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (salary <span class="sc">&lt;=</span> <span class="dv">100000</span>) <span class="fl">0.0575</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="fl">0.06</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="monte-carlo-simulation" class="level2">
+<h2 class="anchored" data-anchor-id="monte-carlo-simulation">Monte Carlo Simulation</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>run_monte_carlo <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">n_sims =</span> <span class="dv">500</span>, <span class="at">start_age =</span> <span class="dv">30</span>, <span class="at">ret_age =</span> <span class="dv">65</span>, </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">death_age =</span> <span class="dv">85</span>, <span class="at">start_sal =</span> <span class="dv">67784</span>) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  n_work <span class="ot">&lt;-</span> (ret_age <span class="sc">-</span> start_age) <span class="sc">*</span> <span class="dv">12</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  n_ret <span class="ot">&lt;-</span> (death_age <span class="sc">-</span> ret_age) <span class="sc">*</span> <span class="dv">12</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(<span class="dv">1</span><span class="sc">:</span>n_sims, <span class="cf">function</span>(sim) {</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    work_sample <span class="ot">&lt;-</span> <span class="fu">slice_sample</span>(combined_monthly_data, <span class="at">n =</span> n_work, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    ret_sample <span class="ot">&lt;-</span> <span class="fu">slice_sample</span>(combined_monthly_data, <span class="at">n =</span> n_ret, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Accumulation phase</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    salary_hist <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">month =</span> <span class="dv">1</span><span class="sc">:</span>n_work) <span class="sc">|&gt;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">wage_growth =</span> work_sample<span class="sc">$</span>wage_monthly_change,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">salary_monthly =</span> (start_sal <span class="sc">/</span> <span class="dv">12</span>) <span class="sc">*</span> <span class="fu">cumprod</span>(<span class="dv">1</span> <span class="sc">+</span> wage_growth),</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">salary_annual =</span> salary_monthly <span class="sc">*</span> <span class="dv">12</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">age =</span> start_age <span class="sc">+</span> (month <span class="sc">/</span> <span class="dv">12</span>)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    trs_monthly <span class="ot">&lt;-</span> <span class="fu">calculate_trs_benefit</span>(salary_hist, n_work)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ORP accumulation</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    orp_bal <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_work) {</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>      emp_rate <span class="ot">&lt;-</span> <span class="fu">get_contribution_rate</span>(salary_hist<span class="sc">$</span>salary_annual[i])</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>      empr_rate <span class="ot">&lt;-</span> <span class="fu">if_else</span>(i <span class="sc">/</span> <span class="dv">12</span> <span class="sc">&lt;=</span> <span class="dv">7</span>, <span class="fl">0.08</span>, <span class="fl">0.10</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>      contrib <span class="ot">&lt;-</span> salary_hist<span class="sc">$</span>salary_monthly[i] <span class="sc">*</span> (emp_rate <span class="sc">+</span> empr_rate)</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>      alloc <span class="ot">&lt;-</span> <span class="fu">get_asset_allocation</span>(salary_hist<span class="sc">$</span>age[i])</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>      ret <span class="ot">&lt;-</span> alloc<span class="sc">$</span>us <span class="sc">*</span> work_sample<span class="sc">$</span>us_equity_return[i] <span class="sc">+</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>             alloc<span class="sc">$</span>intl <span class="sc">*</span> work_sample<span class="sc">$</span>intl_equity_return[i] <span class="sc">+</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>             alloc<span class="sc">$</span>bond <span class="sc">*</span> work_sample<span class="sc">$</span>bond_return[i] <span class="sc">+</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>             alloc<span class="sc">$</span>short <span class="sc">*</span> work_sample<span class="sc">$</span>treasury_monthly_return[i]</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>      orp_bal <span class="ot">&lt;-</span> orp_bal <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> ret) <span class="sc">+</span> contrib</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Decumulation phase</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    trs_total <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>    orp_total <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    curr_withdraw <span class="ot">&lt;-</span> orp_bal <span class="sc">*</span> <span class="fl">0.04</span> <span class="sc">/</span> <span class="dv">12</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    orp_curr <span class="ot">&lt;-</span> orp_bal</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_ret) {</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (j <span class="sc">&gt;</span> <span class="dv">12</span> <span class="sc">&amp;&amp;</span> (j <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">%%</span> <span class="dv">12</span> <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>        annual_cpi <span class="ot">&lt;-</span> <span class="fu">prod</span>(<span class="dv">1</span> <span class="sc">+</span> ret_sample<span class="sc">$</span>cpi_monthly_change[(j <span class="sc">-</span> <span class="dv">12</span>)<span class="sc">:</span>(j <span class="sc">-</span> <span class="dv">1</span>)]) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        trs_monthly <span class="ot">&lt;-</span> <span class="fu">apply_trs_cola</span>(trs_monthly, annual_cpi)</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>        curr_withdraw <span class="ot">&lt;-</span> curr_withdraw <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> annual_cpi)</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>      trs_total <span class="ot">&lt;-</span> trs_total <span class="sc">+</span> trs_monthly</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (orp_curr <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>        amt <span class="ot">&lt;-</span> <span class="fu">min</span>(curr_withdraw, orp_curr)</span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>        orp_total <span class="ot">&lt;-</span> orp_total <span class="sc">+</span> amt</span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>        orp_curr <span class="ot">&lt;-</span> orp_curr <span class="sc">-</span> amt</span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>        alloc <span class="ot">&lt;-</span> <span class="fu">get_asset_allocation</span>(ret_age <span class="sc">+</span> j <span class="sc">/</span> <span class="dv">12</span>)</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>        ret <span class="ot">&lt;-</span> alloc<span class="sc">$</span>us <span class="sc">*</span> ret_sample<span class="sc">$</span>us_equity_return[j] <span class="sc">+</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a>               alloc<span class="sc">$</span>intl <span class="sc">*</span> ret_sample<span class="sc">$</span>intl_equity_return[j] <span class="sc">+</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>               alloc<span class="sc">$</span>bond <span class="sc">*</span> ret_sample<span class="sc">$</span>bond_return[j] <span class="sc">+</span></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>               alloc<span class="sc">$</span>short <span class="sc">*</span> ret_sample<span class="sc">$</span>treasury_monthly_return[j]</span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a>        orp_curr <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">0</span>, orp_curr <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> ret))</span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">sim =</span> sim,</span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a>      <span class="at">trs_total =</span> trs_total,</span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a>      <span class="at">orp_total =</span> orp_total,</span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a>      <span class="at">orp_better =</span> orp_total <span class="sc">&gt;</span> trs_total,</span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a>      <span class="at">depleted =</span> orp_curr <span class="sc">==</span> <span class="dv">0</span>,</span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a>      <span class="at">final_balance =</span> orp_curr</span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a>sim_results <span class="ot">&lt;-</span> <span class="fu">run_monte_carlo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_histogram</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> sim_results<span class="sc">$</span>trs_total <span class="sc">/</span> <span class="dv">1000</span>, </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"TRS Total ($K)"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">marker =</span> <span class="fu">list</span>(<span class="at">line =</span> <span class="fu">list</span>(<span class="at">width =</span> <span class="dv">1</span>, <span class="at">color =</span> <span class="st">"white"</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_histogram</span>(<span class="at">x =</span> sim_results<span class="sc">$</span>orp_total <span class="sc">/</span> <span class="dv">1000</span>, <span class="at">name =</span> <span class="st">"ORP Total ($K)"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">layout</span>(</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">barmode =</span> <span class="st">"overlay"</span>, </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Distribution of Total Retirement Income"</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">xaxis =</span> <span class="fu">list</span>(<span class="at">title =</span> <span class="st">"Total Income ($K)"</span>),</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">yaxis =</span> <span class="fu">list</span>(<span class="at">title =</span> <span class="st">"Frequency (Log Scale)"</span>, <span class="at">type =</span> <span class="st">"log"</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-f7450d0474a35d41de78" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-f7450d0474a35d41de78">{"x":{"visdat":{"5ea46e1fb51":["function () ","plotlyVisDat"]},"cur_data":"5ea46e1fb51","attrs":{"5ea46e1fb51":{"alpha":0.69999999999999996,"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"x":[2954.0874900454855,3152.8500333609318,3163.1858590327411,3038.3067302282675,2906.9767839565352,3384.8292424127371,3015.903779615971,2868.6034812852808,2904.2119532563529,3005.299780567886,3290.2576603164075,2784.7428425035359,2983.917492323963,3026.8722749855483,2831.8714000941345,3353.1424742132763,2723.3976948942977,2804.8939568875194,2839.7327653944008,3123.8715728737334,2896.8779398726606,2857.4842306758565,2634.3610294382047,2978.2845793823012,3460.2877922659736,2975.236411841578,2810.7080916343648,2839.0548616896003,2813.8871483480011,2976.1256257814903,3721.0963682902652,2537.0020648665641,2961.2661114278203,3458.6820595158651,2940.8508887123326,2931.6561341564848,2894.3349827172524,2835.0213935300512,2880.3380717593764,3012.4028286825069,3143.6626052929296,2669.3077287808005,2532.3976346993545,2926.2742802311914,3091.9962172437013,3108.0646477172286,2949.6546702995142,3377.2528870571373,3077.1887944731056,2971.0526401361558,2678.0668623505508,2953.0899504635599,2837.1759479765774,2793.0546552763967,2996.2234600685611,3007.7785559266626,2797.6911087675885,3617.7208499939879,3255.4590158181622,2747.8301650403405,2667.4669680344196,2638.9717045521716,3132.9729120844631,3165.9251623126461,2902.9875220246086,2710.2513348675425,3735.8727592094733,3053.190548982388,3270.3676588113735,3439.8107932507937,3271.1897419961606,3205.6172223870099,2927.6273467717779,3328.3748598697061,3325.1501908822079,3577.1114626502567,2563.8158550197281,3195.443501335305,2834.4342249563824,2928.9446938823926,2718.0320669991811,2953.6184732783559,2819.3541052842916,2812.4871544034959,2689.3308715783969,2667.1340184704036,2761.1072424824306,2730.1996256108209,3437.1254040042531,3093.7146323035486,3295.220506236667,2609.9205150677308,3045.9757679986751,2822.4491016026363,3216.3110600914297,3338.9389487463118,2995.494695570314,3475.2573332384272,3004.3433905423935,3122.6214305889998,2885.4280483036036,2795.5474498754807,2866.0766147438344,3057.2687439145293,2837.6655943947403,3412.5855682667247,3098.8425982144067,2882.0551566923623,3487.3784054118491,3103.5622660443628,2889.3798269040367,2778.5881810535379,3010.2835812514754,3140.9021530206464,3151.115996257904,3367.3270675382873,3323.0300159726603,2797.4924372622049,3158.182535822581,2599.5003837997751,2973.6160435450115,3219.729074210064,2698.7908520324672,2771.000641789125,3038.5483623914611,2836.2030180163474,3796.5489415519883,2832.8598066932072,2895.2902761161422,3204.6688759808285,2698.3427571190728,3182.8836150449138,2957.7839269194683,2772.7172713954569,2879.0689357774736,3113.8355205032299,3791.6246289102228,2880.6902825576649,2878.4208739208289,2797.9402900755649,3392.0674460582236,2590.5944589906035,2809.098247169658,3320.5863920674401,3009.7183802299583,2855.2459845607214,2839.3745466050318,2686.4423493399395,3082.8485909082833,2785.6984946716439,2697.1964476435492,2935.7862596300688,2893.1564225884463,2919.6797826619895,3337.3706082768936,2881.4625239198244,3175.9396016074984,2887.9187050099877,2866.2172582087305,2880.7481163614452,3155.1445387306121,2682.0768289129746,2940.5901389807095,3238.1112810109371,2842.377271508959,3479.7759884499355,2870.4066318531941,2683.4999339666829,3008.8396317170873,3242.518655370176,2930.3994831926179,3094.1541676356724,2693.5299714467101,2667.4967945258181,3110.2703808771266,2931.0829446637044,3251.7913982659734,3241.3472592091566,2930.1054726088555,2925.997825872194,3066.3743897050172,3145.7212195015045,2925.8396795941844,2797.3611467858236,3097.2860434492263,3146.4791207623366,3320.1187114937497,2592.4571261719011,3255.6220758107347,3404.9918596390526,2975.0488793913269,3329.3384574930815,3129.5934668244799,3158.3379088385218,3188.4667716456233,2979.4290888036535,2727.2650951110527,3075.6712076093236,3093.7943966900175,3027.586445929639,2687.6805665025945,2662.4749342897762,3111.7013110347784,2712.1281459124493,3156.7982289141464,2847.4214060349723,3108.4948169820877,2757.0613691169237,2914.4266087731903,2696.2404170236296,3077.4861130440891,2835.376646121174,2956.4480837351134,3221.7847386952913,2814.1101423730897,3080.3514167783328,3007.3807836711267,3052.9528384812593,2852.6893874125603,2981.169266893522,3296.6617373655836,2970.606423754004,3115.1620635010395,2875.9422270776918,2696.9062829254572,3254.1168764875583,2739.4964609589229,3397.5993131277787,3042.7409269623827,2805.1076018376712,2721.2713122174091,3252.2559651091515,2992.027825488834,3021.1684930403758,3617.1846056778977,3001.9932083322356,3173.1787495600006,2884.4693562105263,3114.3068860410826,2639.9020069551702,2995.7564924985286,2844.5215836045363,2761.719323229946,3117.2649792028346,3191.0781384858969,2910.8092893016501,3140.8895183146751,2692.9157446724739,3190.5689770865788,3509.9022272209072,2747.5180286672739,3215.2720913167532,2978.784733592986,2957.316714958512,3072.4578380522585,2773.0605397303802,2529.0309524916397,3035.4745830975717,3018.5302024604775,3059.0484297863445,2686.9601706579306,3011.7734541268733,3044.2971941435221,2633.8660025156682,2979.8756920978726,2961.3882944265943,3010.2493867959429,3732.868164696114,2829.6280120479428,3173.022192522928,3026.2527534781198,2929.1478533833788,3183.5159591931229,3310.5975313760414,3164.3947017318146,2761.5814670140726,3013.663342054489,3117.0101550102268,3010.2694700042252,2652.0975818578231,3200.6008233563648,2714.958168887315,2999.5372127928918,2939.4717460427155,3300.7280939080179,2859.1278525096072,3040.5842169494213,2996.986527617204,2894.3936462324082,2959.7402415892166,3042.1240732536126,3078.7242868479907,3656.571997997863,3300.3168792139968,2974.0692969134693,2763.2029798103581,2802.5563121474001,3673.4333257552671,2966.3210316859977,2882.8591514646787,2937.1700911066505,3295.0359885564076,2716.1094088054888,3073.0998410511143,2940.6540966924781,3199.2311746532482,2980.8457054581245,2952.479268566864,3029.8252404120153,2950.6772966843064,2712.3340217596701,2719.6928184251501,3126.2507660661918,2749.5184917945762,3363.8096173900676,3492.1897576604092,2973.5523581733833,2736.061551193688,3045.8799690241522,2631.7599745624248,3493.6114883742152,2674.5485726351976,2952.4248967289891,3094.2249053286819,2840.0769490162115,3546.2765424266477,2788.9662736670962,2990.8127660067826,2655.5213945242608,2503.557959271579,2945.6633685260431,2934.1020849803208,2716.8964870939062,2747.2910593822853,2776.0697968832283,3360.8938625502983,2970.3908650386488,2777.7037085629991,3435.5137495577519,3305.9540984324026,2876.2152989412593,2858.0327756105285,3150.9252625743466,2761.0593696098599,3011.3113116332947,2725.3636601735129,2985.0582984261496,2843.4200730625253,2943.9619936553026,2796.0656341280614,3125.4023465999358,2607.7529187635223,2899.0561192135929,3061.7514162781831,3002.7333894802446,2928.7078223738185,2886.4596621627838,2982.4803382466193,2990.2464230453352,3243.399590186667,2837.9240990760627,3001.0959430822013,3112.5693579494432,3392.24146659694,2906.7230145844555,3104.5238026745392,2679.9174630294824,2863.5261640936137,2793.6334146681534,2941.0620343075366,3083.5222645789499,3006.1831693000195,3284.9703098345567,2549.4032900522952,3015.2968393965839,2988.7713196586938,2941.9046140530859,2763.0661585608191,3027.2422486925943,3099.2538356657551,3037.1752428783766,2749.6464725083219,2932.9737486841714,2847.7856099561277,2838.5521552446612,3370.3134506240581,3074.8960275188065,3061.2151768797221,3106.4154480102584,2622.66429982814,2983.6869274116975,3230.3078879615846,3104.6363907623627,3120.0273126584721,2713.9259849602699,2904.3120858233519,2849.4851898374336,3130.5113856835278,3107.0296205998993,2992.5468364248159,3157.2678040733522,3109.9140159148683,2670.5430294473695,3287.3885191040772,2939.7187464671947,3021.7191948141731,2777.8520136054253,3008.9890472656716,2931.8978087207702,3054.2305809041654,2893.1575839007628,2839.2754525024302,2889.3103385237014,2686.8714143789302,2797.3936071379471,2936.8228848583658,2982.9921862148994,2936.0317596322679,3197.8761604489328,3335.9920891802922,2925.7904495163648,2697.7424922621422,3122.3767880678056,3170.0349783853126,3314.0550169894573,3046.5493256337759,2645.0041746385737,2979.1968723379109,2782.7135375298762,2958.1576320061304,2968.4818299580047,2954.2771327542537,3154.2889379582161,3004.9290557152272,3050.3988044281846,2908.7089531656684,3086.625520873341,3324.0890262929452,2854.2844074525651,2812.0789727021242,2969.3397539988382,3546.342210117396,2724.861525769581,2650.3767300485688,2993.8148526964774,2943.2624612772997,3011.2352521556986,3054.1582909462522,3279.658820939384,3202.9919951594593,2972.9699386380612,3151.9502437502447,2665.8252106213336,3032.5107543368572,3641.1647218124644,3376.4741522016566,2743.8492490985559,2812.3685059433687,2812.355772804081,3027.118783440852,2694.5825160458608,3110.8248541647245,3002.277981514917,2599.9714900517565,3247.9386041432963,3267.9321574248474,2839.3358980144176,2866.2463932400906,2729.5531506706034,3189.0291095059297,3462.6021961849247,3292.9749345942582,3366.8342856329987,2651.6165182689333,2990.5010737849411,3088.5232220673197,2761.1018485101945,3307.0839715703478,3119.4378072696868,3003.5273639354309,2947.8865470510145,2916.4625591365957,2769.6621193649266,2793.9335566336795,3341.1065695885309,2758.7572424424793,2912.1426037474248,3030.4129339281731,2808.6326521661631,2914.3852053236978,2840.5380405502528,3073.7134524218523,2862.3763185093981,3003.2507855660956,2775.5023544999276,2834.320458592676,2787.296527878601,2656.5437188077826,2950.1244383110775,3049.3784620003071],"type":"histogram","name":"TRS Total ($K)","marker":{"line":{"width":1,"color":"white"}},"inherit":true},"5ea46e1fb51.1":{"alpha":0.69999999999999996,"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"x":[3513.0581870824758,2930.3452795945736,4629.2691480970252,4318.007320351081,6634.8755021207908,7705.2333791077308,2483.0552314013139,4733.4534869922882,1424.6106260465322,3631.8928356565716,7525.3668905866507,2974.6175706481849,2223.3805428487722,3886.9314415309791,3713.9787844773819,4399.2243987738448,1069.6899016110917,5027.5739134417445,1438.1521031786351,3244.476133375721,3806.52902866048,3813.9864418517027,5907.4485497331716,4176.2909767677211,5625.9957234344756,1209.0584097074093,4130.3410893361224,2548.1890090463862,6101.3072408119569,3056.4425815116188,8687.4552973719456,2760.2466110536157,1652.6199731072852,5674.9085774254163,2757.928023097928,4427.0053227436847,2872.3302263274454,6847.8291379186021,1412.5799272019058,3485.5260788178648,4674.9534593923199,1750.9539515567762,4007.1608548897093,12483.766079372483,5556.1589636011959,1469.2385648145282,5616.054228837721,4462.7887588962158,5134.804414590968,3660.7966077407664,3071.2068770713645,3138.6087552892359,1771.5644724261599,2038.835147514571,4851.7214727024775,2735.9515586895304,2618.8314484282419,5137.2593404193913,5640.0496452645912,2555.5930211174909,3202.0727734906009,3758.0739696008363,7538.304389129592,3656.7015420938442,8076.608429485178,4484.5540606281847,6846.2385236718819,4597.4668356907114,2623.404574881728,3542.4134113090167,2036.1594466949789,7933.6289675517501,2709.4452355144267,2962.4639249811376,4311.5341487816177,3981.858095959205,2654.8079224321527,13321.981008757946,4197.2887712876263,3071.9817767871577,1920.3915931093022,1634.7767364947711,2400.500447296281,8706.5908972650486,2141.6530507053239,2851.9537498225945,9297.3674846100639,1849.4029001800077,6096.6397965426931,4371.657872028627,5107.5862315383138,3675.3771707466176,2358.1651124649015,1555.1179897808154,1350.239949733266,4696.7786531213496,4446.9541081534207,4295.6072055916939,3354.0342951989192,4193.9565969423511,2330.8540952060985,1175.6869211153603,3295.5537069324364,3089.6554345725085,3536.5540778479949,2646.7688478723849,2450.5202580087725,2895.5080007645088,1775.3837718415691,3557.9912939930737,2121.880318763303,3124.7950892588851,2898.4635494900162,6669.6904842220629,1791.3143836141769,3301.8008702524012,2616.7036384017233,5440.9128076458619,2972.1045346902015,4041.7947840543379,4382.3083702017866,3405.9479010686332,4076.1989846073361,2849.048931448126,3541.150343361353,3442.7889655484109,5419.276637174451,9698.2363745998773,5976.754939763453,2427.5548650430283,3442.4278957550955,4756.4135143481917,3523.2506531079866,1927.421653714398,2491.620757578718,2764.007239285751,4275.7294112350073,3416.3188424651084,3717.5135575875511,2068.7270522627396,4935.157442490543,2838.716385714341,2771.6529073839365,2191.6747003474247,1161.2631519409799,2409.4240129849422,2896.5850619179855,4506.781623225359,5576.5269441750843,3246.3934062771818,2155.9900484207051,1399.5583951998319,3861.0898596923694,1457.9862081898691,2011.0573731363143,3685.3803074799316,2223.652573969779,2878.7918962540007,1303.8273982981862,5124.5074265121339,2255.7284182490762,2343.6003408599522,1937.6680133468988,4453.2256267138864,3658.8781004772582,5777.8451338624791,4326.231713787497,5948.8516121019147,2468.4377128018828,5126.8462572417538,3805.7717774907819,8024.393657725368,3107.5274180867495,1761.3994276356718,3086.7893923795259,2085.5202842733843,2973.9657472819108,2805.0775752815989,6893.3998250928398,2630.164444155017,4953.6727294235252,3570.2122920812303,5190.2698909318206,2342.9316536957031,3750.4515809902537,3475.5443767022221,2292.2451607418507,3808.6142254827669,3154.7803612243488,5472.3012268169996,2627.5113368717248,8320.4210910975216,3161.3394510561102,2495.056137259252,3542.2684501818312,2871.2452153212489,1595.2804929097967,4093.5834117892441,2108.4518947747788,1808.8322448517488,2348.0421132299375,2699.4060899925189,2213.3449655603645,2810.6215897778966,2988.0786538850689,3770.818891746123,7762.2652226394348,3430.633644688583,3690.2532960847516,4413.1620146585155,1213.1430838381132,5215.7488574886675,2467.433316419701,1982.501207731802,1507.692672715649,6594.3932849240937,2941.9240611584214,2688.6025803366015,2087.1837492461532,1773.4518672073059,4919.294324597432,6199.0005540323582,2278.1251575284919,3245.5194515513936,2163.3269099765453,6858.3433533946827,6236.8809319820466,7452.7437187568612,3154.8757883026633,7272.9563788247451,2194.6609739199739,1900.2290172488988,2473.4567345569321,2175.1301394755242,4258.6210903495512,3718.128248487099,2620.9358139912747,2330.8726889524469,3080.8280158135876,2294.1026904778169,1370.4151473340658,2144.5028170896649,2817.9926445786932,1389.4694913866515,9226.0640327758956,2221.41798330555,5991.1850778187036,3708.006764406417,1743.3153948593308,4153.1036991370465,1910.9136567487365,6042.6694303737104,2736.6698718535176,2752.0269411308641,2054.1123335655375,5061.5392962380156,1921.5260511753634,2237.2700928371901,1697.9938458343697,4309.7866527237284,3476.1258042643626,5108.0365320561777,2095.9210365213794,2553.47470848579,2046.6945411413176,5831.6752255921392,5765.9070656499625,3187.0097427196101,1924.2616562360879,3271.0252469012835,2839.9418006127098,3745.7256758607082,5157.6340577656638,4519.5186058559775,2997.167931448851,2572.3245557498308,7574.8407693226918,3767.4882293090595,1352.7748702703175,1859.7820844907496,2307.0283657807886,2092.7920235299771,2179.9313353035609,3790.63970569603,2564.1270118846937,5828.1609226575711,4301.2471556511227,4364.2300718377974,1865.7528889735036,2434.0002061939235,5961.8645559773386,1814.2948861886525,3930.7374733136962,4653.741517647285,2554.5893076802208,1693.5977192644809,4412.4379347238391,6113.2246170934686,5817.8074625002355,4574.1567254144757,1125.0505700594072,4148.388371114308,3259.3315941698161,2777.290532999988,1455.6691866849203,4354.5624398629916,2597.7712842773544,2351.6917436288832,2376.1865941373794,5906.502585291184,3486.9105707846511,2411.1506194888429,1766.9031644117947,2809.810706216188,4370.5529254555122,1981.950015641863,2271.7924193359045,1342.4094120121872,3288.5128471430294,3207.7166375533047,5275.168421357429,7426.0952860286434,3294.5236299984308,5905.7698076243632,2843.1054609158077,10901.59715808647,1364.5319173252767,2193.1097629776586,5624.9689707615889,3171.3109694255236,3473.9283298691034,2221.1285954562072,2032.2428358574723,2520.9875138822595,2509.2150726690916,3642.0420566406497,3947.1668009509413,2175.3778248375934,7066.8197770318384,2729.3526215091506,4862.117171388124,1637.5316590853674,1804.6832162600729,3183.5205943565356,5485.3080211960933,2604.2905417264442,3072.1911123727882,4653.3227637682612,5355.449754969296,4543.5045374832953,4644.3791089327269,2422.4410194020024,4035.4686621698033,5284.7539968410256,2602.7176380500791,2693.7732375291703,3141.8734357968187,3054.994557148118,3357.9564764563547,6036.9021510124112,2309.6828685967962,2772.2317468313581,2013.3667526820657,4683.1080293979394,1721.7246510933558,3285.1205225021276,3603.96603964734,3193.1794775612484,3234.1213402423837,3848.9807281843428,8268.7436465258907,3874.881386251021,1966.1270555049791,2015.8521834167213,3605.2262762846121,4526.4920605769694,2967.325924908203,3096.420575305177,6399.1632767201854,5767.4537416729827,2173.0333169153173,4321.0536945689546,2940.9210011927753,3238.580040940989,4458.2932627099053,1980.558407080794,3478.5915137202614,3180.1387757692073,3236.1809438874047,1689.4606274590808,2935.0311395380331,8659.380671273113,2965.4493554873279,1245.9546067340582,2055.8354223612287,4207.5361090535553,2553.4159173305857,4031.9067147024971,2281.199366348616,4324.3597621706467,3759.2085366763681,2993.9874665614579,3156.4999625077476,2342.890784888597,2385.502024918248,4960.7582683845676,2890.1642032941982,4914.1074775051611,1901.9833124846537,3072.0852103896918,4103.9185884762082,4113.3444675802648,2497.9629516376658,1604.9473515659133,3726.4262291015225,4539.6984377388035,3743.6252407039287,9138.5667203129415,10966.448824873689,4332.9007154562496,3209.3299422708888,2051.1259606025478,3287.194284402919,5617.2131671600409,3742.6709380322263,3371.4273551819801,3651.6511889505919,5826.7893684392548,2288.8759340050592,3939.8152718535757,1673.7549097059384,3153.6288472742353,2089.1128141534136,3556.9007852716882,3581.0445672870669,3319.3882019029443,1808.7715803157128,13198.617921910381,1463.0651152414773,2904.7215295447459,2008.9214905619133,3178.9009901417639,2394.9467826531322,3940.2339609907694,2700.7685673376459,5672.0201387556262,6283.3689195307634,3956.9979507518565,3373.4507111699058,3704.5240019706803,4458.4568764365358,2915.5967026955395,1883.3267293740612,3988.0682745172885,2792.8104398930795,8939.5225618710447,2326.9904303560825,5177.4047172536966,3243.3765188489497,5080.393164258152,6057.2810181475388,5214.2752890452985,1851.3421637244164,2277.570534007657,2284.6961780353604,4846.7771218368298,3911.5388295240873,1587.7046563619529,1660.2785116481471,3121.2745401284496,4740.9383153851868,4319.3930674192443,11767.407380663179,1447.2150346993044,1614.652089689358,3468.1440382744577,10618.710440474691,4227.1724082547235,4386.9268695627106,3662.8241691597818,3011.9328577871634,3033.2006299062823,5439.0169145431064,4257.113675319747,2307.3882781845573,2194.7302593901541,3406.0791833086123,1961.642425348238,3631.9120145091006,3878.9140699012987,1215.8727817388826,7304.0245352572383,2403.1885473620596,4022.5970102535348,2968.5941938798233,2757.1604546517742,2248.7916877960838,1506.6414665777927,4695.3625186507861,2419.3182042973426],"type":"histogram","name":"ORP Total ($K)","inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"barmode":"overlay","title":"Distribution of Total Retirement Income","xaxis":{"domain":[0,1],"automargin":true,"title":"Total Income ($K)"},"yaxis":{"domain":[0,1],"automargin":true,"title":"Frequency (Log Scale)","type":"log"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[2954.0874900454855,3152.8500333609318,3163.1858590327411,3038.3067302282675,2906.9767839565352,3384.8292424127371,3015.903779615971,2868.6034812852808,2904.2119532563529,3005.299780567886,3290.2576603164075,2784.7428425035359,2983.917492323963,3026.8722749855483,2831.8714000941345,3353.1424742132763,2723.3976948942977,2804.8939568875194,2839.7327653944008,3123.8715728737334,2896.8779398726606,2857.4842306758565,2634.3610294382047,2978.2845793823012,3460.2877922659736,2975.236411841578,2810.7080916343648,2839.0548616896003,2813.8871483480011,2976.1256257814903,3721.0963682902652,2537.0020648665641,2961.2661114278203,3458.6820595158651,2940.8508887123326,2931.6561341564848,2894.3349827172524,2835.0213935300512,2880.3380717593764,3012.4028286825069,3143.6626052929296,2669.3077287808005,2532.3976346993545,2926.2742802311914,3091.9962172437013,3108.0646477172286,2949.6546702995142,3377.2528870571373,3077.1887944731056,2971.0526401361558,2678.0668623505508,2953.0899504635599,2837.1759479765774,2793.0546552763967,2996.2234600685611,3007.7785559266626,2797.6911087675885,3617.7208499939879,3255.4590158181622,2747.8301650403405,2667.4669680344196,2638.9717045521716,3132.9729120844631,3165.9251623126461,2902.9875220246086,2710.2513348675425,3735.8727592094733,3053.190548982388,3270.3676588113735,3439.8107932507937,3271.1897419961606,3205.6172223870099,2927.6273467717779,3328.3748598697061,3325.1501908822079,3577.1114626502567,2563.8158550197281,3195.443501335305,2834.4342249563824,2928.9446938823926,2718.0320669991811,2953.6184732783559,2819.3541052842916,2812.4871544034959,2689.3308715783969,2667.1340184704036,2761.1072424824306,2730.1996256108209,3437.1254040042531,3093.7146323035486,3295.220506236667,2609.9205150677308,3045.9757679986751,2822.4491016026363,3216.3110600914297,3338.9389487463118,2995.494695570314,3475.2573332384272,3004.3433905423935,3122.6214305889998,2885.4280483036036,2795.5474498754807,2866.0766147438344,3057.2687439145293,2837.6655943947403,3412.5855682667247,3098.8425982144067,2882.0551566923623,3487.3784054118491,3103.5622660443628,2889.3798269040367,2778.5881810535379,3010.2835812514754,3140.9021530206464,3151.115996257904,3367.3270675382873,3323.0300159726603,2797.4924372622049,3158.182535822581,2599.5003837997751,2973.6160435450115,3219.729074210064,2698.7908520324672,2771.000641789125,3038.5483623914611,2836.2030180163474,3796.5489415519883,2832.8598066932072,2895.2902761161422,3204.6688759808285,2698.3427571190728,3182.8836150449138,2957.7839269194683,2772.7172713954569,2879.0689357774736,3113.8355205032299,3791.6246289102228,2880.6902825576649,2878.4208739208289,2797.9402900755649,3392.0674460582236,2590.5944589906035,2809.098247169658,3320.5863920674401,3009.7183802299583,2855.2459845607214,2839.3745466050318,2686.4423493399395,3082.8485909082833,2785.6984946716439,2697.1964476435492,2935.7862596300688,2893.1564225884463,2919.6797826619895,3337.3706082768936,2881.4625239198244,3175.9396016074984,2887.9187050099877,2866.2172582087305,2880.7481163614452,3155.1445387306121,2682.0768289129746,2940.5901389807095,3238.1112810109371,2842.377271508959,3479.7759884499355,2870.4066318531941,2683.4999339666829,3008.8396317170873,3242.518655370176,2930.3994831926179,3094.1541676356724,2693.5299714467101,2667.4967945258181,3110.2703808771266,2931.0829446637044,3251.7913982659734,3241.3472592091566,2930.1054726088555,2925.997825872194,3066.3743897050172,3145.7212195015045,2925.8396795941844,2797.3611467858236,3097.2860434492263,3146.4791207623366,3320.1187114937497,2592.4571261719011,3255.6220758107347,3404.9918596390526,2975.0488793913269,3329.3384574930815,3129.5934668244799,3158.3379088385218,3188.4667716456233,2979.4290888036535,2727.2650951110527,3075.6712076093236,3093.7943966900175,3027.586445929639,2687.6805665025945,2662.4749342897762,3111.7013110347784,2712.1281459124493,3156.7982289141464,2847.4214060349723,3108.4948169820877,2757.0613691169237,2914.4266087731903,2696.2404170236296,3077.4861130440891,2835.376646121174,2956.4480837351134,3221.7847386952913,2814.1101423730897,3080.3514167783328,3007.3807836711267,3052.9528384812593,2852.6893874125603,2981.169266893522,3296.6617373655836,2970.606423754004,3115.1620635010395,2875.9422270776918,2696.9062829254572,3254.1168764875583,2739.4964609589229,3397.5993131277787,3042.7409269623827,2805.1076018376712,2721.2713122174091,3252.2559651091515,2992.027825488834,3021.1684930403758,3617.1846056778977,3001.9932083322356,3173.1787495600006,2884.4693562105263,3114.3068860410826,2639.9020069551702,2995.7564924985286,2844.5215836045363,2761.719323229946,3117.2649792028346,3191.0781384858969,2910.8092893016501,3140.8895183146751,2692.9157446724739,3190.5689770865788,3509.9022272209072,2747.5180286672739,3215.2720913167532,2978.784733592986,2957.316714958512,3072.4578380522585,2773.0605397303802,2529.0309524916397,3035.4745830975717,3018.5302024604775,3059.0484297863445,2686.9601706579306,3011.7734541268733,3044.2971941435221,2633.8660025156682,2979.8756920978726,2961.3882944265943,3010.2493867959429,3732.868164696114,2829.6280120479428,3173.022192522928,3026.2527534781198,2929.1478533833788,3183.5159591931229,3310.5975313760414,3164.3947017318146,2761.5814670140726,3013.663342054489,3117.0101550102268,3010.2694700042252,2652.0975818578231,3200.6008233563648,2714.958168887315,2999.5372127928918,2939.4717460427155,3300.7280939080179,2859.1278525096072,3040.5842169494213,2996.986527617204,2894.3936462324082,2959.7402415892166,3042.1240732536126,3078.7242868479907,3656.571997997863,3300.3168792139968,2974.0692969134693,2763.2029798103581,2802.5563121474001,3673.4333257552671,2966.3210316859977,2882.8591514646787,2937.1700911066505,3295.0359885564076,2716.1094088054888,3073.0998410511143,2940.6540966924781,3199.2311746532482,2980.8457054581245,2952.479268566864,3029.8252404120153,2950.6772966843064,2712.3340217596701,2719.6928184251501,3126.2507660661918,2749.5184917945762,3363.8096173900676,3492.1897576604092,2973.5523581733833,2736.061551193688,3045.8799690241522,2631.7599745624248,3493.6114883742152,2674.5485726351976,2952.4248967289891,3094.2249053286819,2840.0769490162115,3546.2765424266477,2788.9662736670962,2990.8127660067826,2655.5213945242608,2503.557959271579,2945.6633685260431,2934.1020849803208,2716.8964870939062,2747.2910593822853,2776.0697968832283,3360.8938625502983,2970.3908650386488,2777.7037085629991,3435.5137495577519,3305.9540984324026,2876.2152989412593,2858.0327756105285,3150.9252625743466,2761.0593696098599,3011.3113116332947,2725.3636601735129,2985.0582984261496,2843.4200730625253,2943.9619936553026,2796.0656341280614,3125.4023465999358,2607.7529187635223,2899.0561192135929,3061.7514162781831,3002.7333894802446,2928.7078223738185,2886.4596621627838,2982.4803382466193,2990.2464230453352,3243.399590186667,2837.9240990760627,3001.0959430822013,3112.5693579494432,3392.24146659694,2906.7230145844555,3104.5238026745392,2679.9174630294824,2863.5261640936137,2793.6334146681534,2941.0620343075366,3083.5222645789499,3006.1831693000195,3284.9703098345567,2549.4032900522952,3015.2968393965839,2988.7713196586938,2941.9046140530859,2763.0661585608191,3027.2422486925943,3099.2538356657551,3037.1752428783766,2749.6464725083219,2932.9737486841714,2847.7856099561277,2838.5521552446612,3370.3134506240581,3074.8960275188065,3061.2151768797221,3106.4154480102584,2622.66429982814,2983.6869274116975,3230.3078879615846,3104.6363907623627,3120.0273126584721,2713.9259849602699,2904.3120858233519,2849.4851898374336,3130.5113856835278,3107.0296205998993,2992.5468364248159,3157.2678040733522,3109.9140159148683,2670.5430294473695,3287.3885191040772,2939.7187464671947,3021.7191948141731,2777.8520136054253,3008.9890472656716,2931.8978087207702,3054.2305809041654,2893.1575839007628,2839.2754525024302,2889.3103385237014,2686.8714143789302,2797.3936071379471,2936.8228848583658,2982.9921862148994,2936.0317596322679,3197.8761604489328,3335.9920891802922,2925.7904495163648,2697.7424922621422,3122.3767880678056,3170.0349783853126,3314.0550169894573,3046.5493256337759,2645.0041746385737,2979.1968723379109,2782.7135375298762,2958.1576320061304,2968.4818299580047,2954.2771327542537,3154.2889379582161,3004.9290557152272,3050.3988044281846,2908.7089531656684,3086.625520873341,3324.0890262929452,2854.2844074525651,2812.0789727021242,2969.3397539988382,3546.342210117396,2724.861525769581,2650.3767300485688,2993.8148526964774,2943.2624612772997,3011.2352521556986,3054.1582909462522,3279.658820939384,3202.9919951594593,2972.9699386380612,3151.9502437502447,2665.8252106213336,3032.5107543368572,3641.1647218124644,3376.4741522016566,2743.8492490985559,2812.3685059433687,2812.355772804081,3027.118783440852,2694.5825160458608,3110.8248541647245,3002.277981514917,2599.9714900517565,3247.9386041432963,3267.9321574248474,2839.3358980144176,2866.2463932400906,2729.5531506706034,3189.0291095059297,3462.6021961849247,3292.9749345942582,3366.8342856329987,2651.6165182689333,2990.5010737849411,3088.5232220673197,2761.1018485101945,3307.0839715703478,3119.4378072696868,3003.5273639354309,2947.8865470510145,2916.4625591365957,2769.6621193649266,2793.9335566336795,3341.1065695885309,2758.7572424424793,2912.1426037474248,3030.4129339281731,2808.6326521661631,2914.3852053236978,2840.5380405502528,3073.7134524218523,2862.3763185093981,3003.2507855660956,2775.5023544999276,2834.320458592676,2787.296527878601,2656.5437188077826,2950.1244383110775,3049.3784620003071],"type":"histogram","name":"TRS Total ($K)","marker":{"color":"rgba(31,119,180,0.7)","line":{"color":"white","width":1}},"error_y":{"color":"rgba(31,119,180,0.7)"},"error_x":{"color":"rgba(31,119,180,0.7)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[3513.0581870824758,2930.3452795945736,4629.2691480970252,4318.007320351081,6634.8755021207908,7705.2333791077308,2483.0552314013139,4733.4534869922882,1424.6106260465322,3631.8928356565716,7525.3668905866507,2974.6175706481849,2223.3805428487722,3886.9314415309791,3713.9787844773819,4399.2243987738448,1069.6899016110917,5027.5739134417445,1438.1521031786351,3244.476133375721,3806.52902866048,3813.9864418517027,5907.4485497331716,4176.2909767677211,5625.9957234344756,1209.0584097074093,4130.3410893361224,2548.1890090463862,6101.3072408119569,3056.4425815116188,8687.4552973719456,2760.2466110536157,1652.6199731072852,5674.9085774254163,2757.928023097928,4427.0053227436847,2872.3302263274454,6847.8291379186021,1412.5799272019058,3485.5260788178648,4674.9534593923199,1750.9539515567762,4007.1608548897093,12483.766079372483,5556.1589636011959,1469.2385648145282,5616.054228837721,4462.7887588962158,5134.804414590968,3660.7966077407664,3071.2068770713645,3138.6087552892359,1771.5644724261599,2038.835147514571,4851.7214727024775,2735.9515586895304,2618.8314484282419,5137.2593404193913,5640.0496452645912,2555.5930211174909,3202.0727734906009,3758.0739696008363,7538.304389129592,3656.7015420938442,8076.608429485178,4484.5540606281847,6846.2385236718819,4597.4668356907114,2623.404574881728,3542.4134113090167,2036.1594466949789,7933.6289675517501,2709.4452355144267,2962.4639249811376,4311.5341487816177,3981.858095959205,2654.8079224321527,13321.981008757946,4197.2887712876263,3071.9817767871577,1920.3915931093022,1634.7767364947711,2400.500447296281,8706.5908972650486,2141.6530507053239,2851.9537498225945,9297.3674846100639,1849.4029001800077,6096.6397965426931,4371.657872028627,5107.5862315383138,3675.3771707466176,2358.1651124649015,1555.1179897808154,1350.239949733266,4696.7786531213496,4446.9541081534207,4295.6072055916939,3354.0342951989192,4193.9565969423511,2330.8540952060985,1175.6869211153603,3295.5537069324364,3089.6554345725085,3536.5540778479949,2646.7688478723849,2450.5202580087725,2895.5080007645088,1775.3837718415691,3557.9912939930737,2121.880318763303,3124.7950892588851,2898.4635494900162,6669.6904842220629,1791.3143836141769,3301.8008702524012,2616.7036384017233,5440.9128076458619,2972.1045346902015,4041.7947840543379,4382.3083702017866,3405.9479010686332,4076.1989846073361,2849.048931448126,3541.150343361353,3442.7889655484109,5419.276637174451,9698.2363745998773,5976.754939763453,2427.5548650430283,3442.4278957550955,4756.4135143481917,3523.2506531079866,1927.421653714398,2491.620757578718,2764.007239285751,4275.7294112350073,3416.3188424651084,3717.5135575875511,2068.7270522627396,4935.157442490543,2838.716385714341,2771.6529073839365,2191.6747003474247,1161.2631519409799,2409.4240129849422,2896.5850619179855,4506.781623225359,5576.5269441750843,3246.3934062771818,2155.9900484207051,1399.5583951998319,3861.0898596923694,1457.9862081898691,2011.0573731363143,3685.3803074799316,2223.652573969779,2878.7918962540007,1303.8273982981862,5124.5074265121339,2255.7284182490762,2343.6003408599522,1937.6680133468988,4453.2256267138864,3658.8781004772582,5777.8451338624791,4326.231713787497,5948.8516121019147,2468.4377128018828,5126.8462572417538,3805.7717774907819,8024.393657725368,3107.5274180867495,1761.3994276356718,3086.7893923795259,2085.5202842733843,2973.9657472819108,2805.0775752815989,6893.3998250928398,2630.164444155017,4953.6727294235252,3570.2122920812303,5190.2698909318206,2342.9316536957031,3750.4515809902537,3475.5443767022221,2292.2451607418507,3808.6142254827669,3154.7803612243488,5472.3012268169996,2627.5113368717248,8320.4210910975216,3161.3394510561102,2495.056137259252,3542.2684501818312,2871.2452153212489,1595.2804929097967,4093.5834117892441,2108.4518947747788,1808.8322448517488,2348.0421132299375,2699.4060899925189,2213.3449655603645,2810.6215897778966,2988.0786538850689,3770.818891746123,7762.2652226394348,3430.633644688583,3690.2532960847516,4413.1620146585155,1213.1430838381132,5215.7488574886675,2467.433316419701,1982.501207731802,1507.692672715649,6594.3932849240937,2941.9240611584214,2688.6025803366015,2087.1837492461532,1773.4518672073059,4919.294324597432,6199.0005540323582,2278.1251575284919,3245.5194515513936,2163.3269099765453,6858.3433533946827,6236.8809319820466,7452.7437187568612,3154.8757883026633,7272.9563788247451,2194.6609739199739,1900.2290172488988,2473.4567345569321,2175.1301394755242,4258.6210903495512,3718.128248487099,2620.9358139912747,2330.8726889524469,3080.8280158135876,2294.1026904778169,1370.4151473340658,2144.5028170896649,2817.9926445786932,1389.4694913866515,9226.0640327758956,2221.41798330555,5991.1850778187036,3708.006764406417,1743.3153948593308,4153.1036991370465,1910.9136567487365,6042.6694303737104,2736.6698718535176,2752.0269411308641,2054.1123335655375,5061.5392962380156,1921.5260511753634,2237.2700928371901,1697.9938458343697,4309.7866527237284,3476.1258042643626,5108.0365320561777,2095.9210365213794,2553.47470848579,2046.6945411413176,5831.6752255921392,5765.9070656499625,3187.0097427196101,1924.2616562360879,3271.0252469012835,2839.9418006127098,3745.7256758607082,5157.6340577656638,4519.5186058559775,2997.167931448851,2572.3245557498308,7574.8407693226918,3767.4882293090595,1352.7748702703175,1859.7820844907496,2307.0283657807886,2092.7920235299771,2179.9313353035609,3790.63970569603,2564.1270118846937,5828.1609226575711,4301.2471556511227,4364.2300718377974,1865.7528889735036,2434.0002061939235,5961.8645559773386,1814.2948861886525,3930.7374733136962,4653.741517647285,2554.5893076802208,1693.5977192644809,4412.4379347238391,6113.2246170934686,5817.8074625002355,4574.1567254144757,1125.0505700594072,4148.388371114308,3259.3315941698161,2777.290532999988,1455.6691866849203,4354.5624398629916,2597.7712842773544,2351.6917436288832,2376.1865941373794,5906.502585291184,3486.9105707846511,2411.1506194888429,1766.9031644117947,2809.810706216188,4370.5529254555122,1981.950015641863,2271.7924193359045,1342.4094120121872,3288.5128471430294,3207.7166375533047,5275.168421357429,7426.0952860286434,3294.5236299984308,5905.7698076243632,2843.1054609158077,10901.59715808647,1364.5319173252767,2193.1097629776586,5624.9689707615889,3171.3109694255236,3473.9283298691034,2221.1285954562072,2032.2428358574723,2520.9875138822595,2509.2150726690916,3642.0420566406497,3947.1668009509413,2175.3778248375934,7066.8197770318384,2729.3526215091506,4862.117171388124,1637.5316590853674,1804.6832162600729,3183.5205943565356,5485.3080211960933,2604.2905417264442,3072.1911123727882,4653.3227637682612,5355.449754969296,4543.5045374832953,4644.3791089327269,2422.4410194020024,4035.4686621698033,5284.7539968410256,2602.7176380500791,2693.7732375291703,3141.8734357968187,3054.994557148118,3357.9564764563547,6036.9021510124112,2309.6828685967962,2772.2317468313581,2013.3667526820657,4683.1080293979394,1721.7246510933558,3285.1205225021276,3603.96603964734,3193.1794775612484,3234.1213402423837,3848.9807281843428,8268.7436465258907,3874.881386251021,1966.1270555049791,2015.8521834167213,3605.2262762846121,4526.4920605769694,2967.325924908203,3096.420575305177,6399.1632767201854,5767.4537416729827,2173.0333169153173,4321.0536945689546,2940.9210011927753,3238.580040940989,4458.2932627099053,1980.558407080794,3478.5915137202614,3180.1387757692073,3236.1809438874047,1689.4606274590808,2935.0311395380331,8659.380671273113,2965.4493554873279,1245.9546067340582,2055.8354223612287,4207.5361090535553,2553.4159173305857,4031.9067147024971,2281.199366348616,4324.3597621706467,3759.2085366763681,2993.9874665614579,3156.4999625077476,2342.890784888597,2385.502024918248,4960.7582683845676,2890.1642032941982,4914.1074775051611,1901.9833124846537,3072.0852103896918,4103.9185884762082,4113.3444675802648,2497.9629516376658,1604.9473515659133,3726.4262291015225,4539.6984377388035,3743.6252407039287,9138.5667203129415,10966.448824873689,4332.9007154562496,3209.3299422708888,2051.1259606025478,3287.194284402919,5617.2131671600409,3742.6709380322263,3371.4273551819801,3651.6511889505919,5826.7893684392548,2288.8759340050592,3939.8152718535757,1673.7549097059384,3153.6288472742353,2089.1128141534136,3556.9007852716882,3581.0445672870669,3319.3882019029443,1808.7715803157128,13198.617921910381,1463.0651152414773,2904.7215295447459,2008.9214905619133,3178.9009901417639,2394.9467826531322,3940.2339609907694,2700.7685673376459,5672.0201387556262,6283.3689195307634,3956.9979507518565,3373.4507111699058,3704.5240019706803,4458.4568764365358,2915.5967026955395,1883.3267293740612,3988.0682745172885,2792.8104398930795,8939.5225618710447,2326.9904303560825,5177.4047172536966,3243.3765188489497,5080.393164258152,6057.2810181475388,5214.2752890452985,1851.3421637244164,2277.570534007657,2284.6961780353604,4846.7771218368298,3911.5388295240873,1587.7046563619529,1660.2785116481471,3121.2745401284496,4740.9383153851868,4319.3930674192443,11767.407380663179,1447.2150346993044,1614.652089689358,3468.1440382744577,10618.710440474691,4227.1724082547235,4386.9268695627106,3662.8241691597818,3011.9328577871634,3033.2006299062823,5439.0169145431064,4257.113675319747,2307.3882781845573,2194.7302593901541,3406.0791833086123,1961.642425348238,3631.9120145091006,3878.9140699012987,1215.8727817388826,7304.0245352572383,2403.1885473620596,4022.5970102535348,2968.5941938798233,2757.1604546517742,2248.7916877960838,1506.6414665777927,4695.3625186507861,2419.3182042973426],"type":"histogram","name":"ORP Total ($K)","marker":{"color":"rgba(255,127,14,0.7)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,0.7)"},"error_x":{"color":"rgba(255,127,14,0.7)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<p><strong>Risk of Ruin:</strong> ORP depleted funds before death in 0% of scenarios.</p>
+<p><strong>Income Superiority:</strong> ORP provided higher total income in 59% of scenarios.</p>
+</section>
+<section id="recommendation" class="level2">
+<h2 class="anchored" data-anchor-id="recommendation">Recommendation</h2>
+<p>Based on the Monte Carlo simulation, <strong>TRS is recommended</strong> for faculty starting at age 30 with moderate risk tolerance.</p>
+<p><strong>Key Trade-offs:</strong></p>
+<ul>
+<li><strong>TRS:</strong> Provides predictable, inflation-adjusted income around $3,500/month, eliminating longevity risk</li>
+<li><strong>ORP:</strong> Offers upside potential (some scenarios exceed $12,000/month), but most likely outcome ($2,000-$3,000/month) is lower than TRS</li>
+</ul>
+<p>For risk-neutral or risk-averse individuals, TRS offers a superior income floor. ORP is only preferable if willing to accept &gt;50% chance of underperformance in exchange for small probability of significant wealth.</p>
+</section>
+<section id="sensitivity-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="sensitivity-analysis">Sensitivity Analysis</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>run_sim_for_age <span class="ot">&lt;-</span> <span class="cf">function</span>(ret_age_input, <span class="at">n_sims =</span> <span class="dv">200</span>) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  start_age <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  death_age <span class="ot">&lt;-</span> <span class="dv">85</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  start_sal <span class="ot">&lt;-</span> <span class="dv">67784</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  n_work <span class="ot">&lt;-</span> (ret_age_input <span class="sc">-</span> start_age) <span class="sc">*</span> <span class="dv">12</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  n_ret <span class="ot">&lt;-</span> (death_age <span class="sc">-</span> ret_age_input) <span class="sc">*</span> <span class="dv">12</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  results <span class="ot">&lt;-</span> <span class="fu">map_dfr</span>(<span class="dv">1</span><span class="sc">:</span>n_sims, <span class="cf">function</span>(sim) {</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    work_sample <span class="ot">&lt;-</span> <span class="fu">slice_sample</span>(combined_monthly_data, <span class="at">n =</span> n_work, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    ret_sample <span class="ot">&lt;-</span> <span class="fu">slice_sample</span>(combined_monthly_data, <span class="at">n =</span> n_ret, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    salary_hist <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">month =</span> <span class="dv">1</span><span class="sc">:</span>n_work) <span class="sc">|&gt;</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">wage_growth =</span> work_sample<span class="sc">$</span>wage_monthly_change,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">salary_monthly =</span> (start_sal <span class="sc">/</span> <span class="dv">12</span>) <span class="sc">*</span> <span class="fu">cumprod</span>(<span class="dv">1</span> <span class="sc">+</span> wage_growth),</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">salary_annual =</span> salary_monthly <span class="sc">*</span> <span class="dv">12</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">age =</span> start_age <span class="sc">+</span> (month <span class="sc">/</span> <span class="dv">12</span>)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    trs_monthly <span class="ot">&lt;-</span> <span class="fu">calculate_trs_benefit</span>(salary_hist, n_work)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    orp_bal <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_work) {</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>      emp_rate <span class="ot">&lt;-</span> <span class="fu">get_contribution_rate</span>(salary_hist<span class="sc">$</span>salary_annual[i])</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>      er_rate <span class="ot">&lt;-</span> <span class="cf">if</span> (i <span class="sc">/</span> <span class="dv">12</span> <span class="sc">&lt;=</span> <span class="dv">7</span>) <span class="fl">0.08</span> <span class="cf">else</span> <span class="fl">0.10</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>      contrib <span class="ot">&lt;-</span> salary_hist<span class="sc">$</span>salary_monthly[i] <span class="sc">*</span> (emp_rate <span class="sc">+</span> er_rate)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      alloc <span class="ot">&lt;-</span> <span class="fu">get_asset_allocation</span>(salary_hist<span class="sc">$</span>age[i])</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>      ret <span class="ot">&lt;-</span> alloc<span class="sc">$</span>us <span class="sc">*</span> work_sample<span class="sc">$</span>us_equity_return[i] <span class="sc">+</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>             alloc<span class="sc">$</span>intl <span class="sc">*</span> work_sample<span class="sc">$</span>intl_equity_return[i] <span class="sc">+</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>             alloc<span class="sc">$</span>bond <span class="sc">*</span> work_sample<span class="sc">$</span>bond_return[i] <span class="sc">+</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>             alloc<span class="sc">$</span>short <span class="sc">*</span> work_sample<span class="sc">$</span>treasury_monthly_return[i]</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>      orp_bal <span class="ot">&lt;-</span> orp_bal <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> ret) <span class="sc">+</span> contrib</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    trs_lifetime <span class="ot">&lt;-</span> trs_monthly <span class="sc">*</span> n_ret</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>    orp_lifetime <span class="ot">&lt;-</span> (orp_bal <span class="sc">*</span> <span class="fl">0.04</span>) <span class="sc">*</span> (n_ret <span class="sc">/</span> <span class="dv">12</span>)</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">orp_better =</span> orp_lifetime <span class="sc">&gt;</span> trs_lifetime)</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">Retirement_Age =</span> ret_age_input,</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">ORP_Win_Rate =</span> <span class="fu">mean</span>(results<span class="sc">$</span>orp_better)</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>sensitivity_results <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">run_sim_for_age</span>(<span class="dv">55</span>),</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">run_sim_for_age</span>(<span class="dv">60</span>),</span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">run_sim_for_age</span>(<span class="dv">65</span>),</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">run_sim_for_age</span>(<span class="dv">70</span>)</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sensitivity_results, <span class="fu">aes</span>(<span class="at">x =</span> Retirement_Age, <span class="at">y =</span> ORP_Win_Rate)) <span class="sc">+</span></span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"#2c3e50"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"#e67e22"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> percent) <span class="sc">+</span></span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Sensitivity Analysis: ORP Win Rate vs. Retirement Age"</span>,</span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Does working longer favor the investment-based plan?"</span>,</span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Retirement Age"</span>,</span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Probability ORP Exceeds TRS"</span></span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplotly</span>(p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-ad79999c3236ce5c2f7a" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-ad79999c3236ce5c2f7a">{"x":{"data":[{"x":[55,60,65,70],"y":[0.26000000000000001,0.435,0.46000000000000002,0.51000000000000001],"text":["Retirement_Age: 55<br />ORP_Win_Rate: 0.260","Retirement_Age: 60<br />ORP_Win_Rate: 0.435","Retirement_Age: 65<br />ORP_Win_Rate: 0.460","Retirement_Age: 70<br />ORP_Win_Rate: 0.510"],"type":"scatter","mode":"lines+markers","line":{"width":3.7795275590551185,"color":"rgba(44,62,80,1)","dash":"solid"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","marker":{"autocolorscale":false,"color":"rgba(230,126,34,1)","opacity":1,"size":11.338582677165356,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(230,126,34,1)"}},"frame":null}],"layout":{"margin":{"t":40.840182648401829,"r":7.3059360730593621,"b":37.260273972602747,"l":43.105022831050235},"paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"title":{"text":"Sensitivity Analysis: ORP Win Rate vs. Retirement Age","font":{"color":"rgba(0,0,0,1)","family":"","size":17.534246575342465},"x":0,"xref":"paper"},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[54.25,70.75],"tickmode":"array","ticktext":["55","60","65","70"],"tickvals":[55,60,65,70],"categoryorder":"array","categoryarray":["55","60","65","70"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":3.6529680365296811,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(235,235,235,1)","gridwidth":0,"zeroline":false,"anchor":"y","title":{"text":"Retirement Age","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.2475,0.52249999999999996],"tickmode":"array","ticktext":["25%","30%","35%","40%","45%","50%"],"tickvals":[0.25,0.29999999999999999,0.34999999999999998,0.40000000000000002,0.45000000000000007,0.5],"categoryorder":"array","categoryarray":["25%","30%","35%","40%","45%","50%"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":3.6529680365296811,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(235,235,235,1)","gridwidth":0,"zeroline":false,"anchor":"x","title":{"text":"Probability ORP Exceeds TRS","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","layer":"below","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":null,"bordercolor":null,"borderwidth":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"5ea4404513ec":{"x":{},"y":{},"type":"scatter"},"5ea43a823691":{"x":{},"y":{}}},"cur_data":"5ea4404513ec","visdat":{"5ea4404513ec":["function (y) ","x"],"5ea43a823691":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<p><strong>Analysis:</strong> Early retirement (age 55) strongly favors TRS with ORP winning &lt;30% of the time. As retirement age increases to 70, ORP’s probability of outperforming approaches 50%. Longer careers allow more time for compound growth and market recovery, making ORP more attractive for faculty planning to work into their 70s.</p>
+<!-- -->
+
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb9" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "CUNY Retirement Plan Analysis: A Monte Carlo Approach"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Data-Driven Decision Support for New Faculty"</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Yashvi Mittal"</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2025-12-18"</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">    theme: cosmo</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">  cache: true</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup, include=FALSE}</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="in">library(tidyverse)</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="in">library(httr2)</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="in">library(lubridate)</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="in">library(scales)</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="in">library(gt)</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="in">library(plotly)</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="in">knitr::opts_chunk$set(echo = TRUE, fig.align = "center", fig.retina = 2)</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## Summary</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>This analysis evaluates CUNY's two retirement plans: the defined-benefit Teachers Retirement System (TRS) and the defined-contribution Optional Retirement Plan (ORP). Using Monte Carlo simulation with bootstrap resampling of historical market data, we compare long-term financial outcomes to assist new faculty in making this permanent decision.</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Acquisition</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{r api-keys, echo=FALSE}</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a><span class="in">alpha_key &lt;- trimws(readLines("keys/alphavantage_key.txt", n = 1, warn = FALSE))</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a><span class="in">fred_key &lt;- trimws(readLines("keys/fred_key.txt", n = 1, warn = FALSE))</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="in">if (alpha_key == "" || fred_key == "") stop("API key file is empty or missing.")</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{r data-functions}</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a><span class="in">get_fred_series &lt;- function(series_id, api_key, start_date = "2004-01-01") {</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a><span class="in">  request("https://api.stlouisfed.org/fred/series/observations") |&gt;</span></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a><span class="in">    req_url_query(</span></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a><span class="in">      series_id = series_id,</span></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a><span class="in">      api_key = as.character(api_key)[1],</span></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a><span class="in">      file_type = "json",</span></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a><span class="in">      observation_start = start_date</span></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a><span class="in">    ) |&gt;</span></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a><span class="in">    req_retry(max_tries = 3) |&gt;</span></span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a><span class="in">    req_perform() |&gt; </span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a><span class="in">    resp_body_json(simplifyVector = TRUE) |&gt;</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a><span class="in">    pluck("observations") |&gt;</span></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a><span class="in">    as_tibble() |&gt;</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a><span class="in">    transmute(</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a><span class="in">      date = floor_date(ymd(date), "month"),</span></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a><span class="in">      value = as.numeric(value)</span></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a><span class="in">    ) |&gt;</span></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a><span class="in">    drop_na()</span></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a><span class="in">get_alphavantage_monthly &lt;- function(symbol, api_key) {</span></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a><span class="in">  Sys.sleep(15)  # Rate limit: 5 calls/min</span></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a><span class="in">  resp &lt;- request("https://www.alphavantage.co/query") |&gt;</span></span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a><span class="in">    req_url_query(</span></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a><span class="in">      `function` = "TIME_SERIES_MONTHLY_ADJUSTED",</span></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a><span class="in">      symbol = symbol,</span></span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a><span class="in">      apikey = as.character(api_key)[1]</span></span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a><span class="in">    ) |&gt;</span></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a><span class="in">    req_retry(max_tries = 3) |&gt;</span></span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a><span class="in">    req_perform() |&gt; </span></span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a><span class="in">    resp_body_json()</span></span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a><span class="in">  if (!is.null(resp$Note) || !is.null(resp$`Error Message`)) {</span></span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a><span class="in">    stop("AlphaVantage Error: ", resp$Note, resp$`Error Message`)</span></span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a><span class="in">  }</span></span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a><span class="in">  resp$`Monthly Adjusted Time Series` |&gt;</span></span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a><span class="in">    map_dfr(~as.numeric(.x$`5. adjusted close`)) |&gt;</span></span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a><span class="in">    pivot_longer(everything(), names_to = "date", values_to = "adjusted_close") |&gt;</span></span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a><span class="in">    mutate(date = floor_date(ymd(date), "month")) |&gt;</span></span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a><span class="in">    arrange(date) |&gt;</span></span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a><span class="in">    mutate(monthly_return = (adjusted_close / lag(adjusted_close)) - 1) |&gt;</span></span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a><span class="in">    drop_na() |&gt;</span></span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a><span class="in">    select(date, monthly_return)</span></span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Processing</span></span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fetch-data, cache=TRUE}</span></span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a><span class="in"># Economic indicators from FRED</span></span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a><span class="in">cpi_data &lt;- get_fred_series("CPIAUCSL", fred_key)</span></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a><span class="in">wage_data &lt;- get_fred_series("CES0500000003", fred_key)</span></span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a><span class="in">treasury_data &lt;- get_fred_series("DGS2", fred_key)</span></span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a><span class="in"># Market data from AlphaVantage</span></span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a><span class="in">market_data &lt;- list(</span></span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a><span class="in">  us = get_alphavantage_monthly("VTI", alpha_key),</span></span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a><span class="in">  intl = get_alphavantage_monthly("VXUS", alpha_key),</span></span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a><span class="in">  bond = get_alphavantage_monthly("BND", alpha_key)</span></span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a><span class="in">)</span></span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a><span class="in"># Combine all data</span></span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a><span class="in">combined_monthly_data &lt;- cpi_data |&gt;</span></span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(date) |&gt;</span></span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(cpi_monthly_change = value / lag(value) - 1) |&gt;</span></span>
+<span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a><span class="in">  select(date, cpi_monthly_change) |&gt;</span></span>
+<span id="cb9-111"><a href="#cb9-111" aria-hidden="true" tabindex="-1"></a><span class="in">  inner_join(</span></span>
+<span id="cb9-112"><a href="#cb9-112" aria-hidden="true" tabindex="-1"></a><span class="in">    wage_data |&gt; </span></span>
+<span id="cb9-113"><a href="#cb9-113" aria-hidden="true" tabindex="-1"></a><span class="in">      arrange(date) |&gt; </span></span>
+<span id="cb9-114"><a href="#cb9-114" aria-hidden="true" tabindex="-1"></a><span class="in">      mutate(wage_monthly_change = value / lag(value) - 1) |&gt; </span></span>
+<span id="cb9-115"><a href="#cb9-115" aria-hidden="true" tabindex="-1"></a><span class="in">      select(date, wage_monthly_change),</span></span>
+<span id="cb9-116"><a href="#cb9-116" aria-hidden="true" tabindex="-1"></a><span class="in">    by = "date"</span></span>
+<span id="cb9-117"><a href="#cb9-117" aria-hidden="true" tabindex="-1"></a><span class="in">  ) |&gt;</span></span>
+<span id="cb9-118"><a href="#cb9-118" aria-hidden="true" tabindex="-1"></a><span class="in">  inner_join(</span></span>
+<span id="cb9-119"><a href="#cb9-119" aria-hidden="true" tabindex="-1"></a><span class="in">    treasury_data |&gt; </span></span>
+<span id="cb9-120"><a href="#cb9-120" aria-hidden="true" tabindex="-1"></a><span class="in">      arrange(date) |&gt; </span></span>
+<span id="cb9-121"><a href="#cb9-121" aria-hidden="true" tabindex="-1"></a><span class="in">      mutate(treasury_monthly_return = value / 100 / 12) |&gt; </span></span>
+<span id="cb9-122"><a href="#cb9-122" aria-hidden="true" tabindex="-1"></a><span class="in">      select(date, treasury_monthly_return),</span></span>
+<span id="cb9-123"><a href="#cb9-123" aria-hidden="true" tabindex="-1"></a><span class="in">    by = "date"</span></span>
+<span id="cb9-124"><a href="#cb9-124" aria-hidden="true" tabindex="-1"></a><span class="in">  ) |&gt;</span></span>
+<span id="cb9-125"><a href="#cb9-125" aria-hidden="true" tabindex="-1"></a><span class="in">  inner_join(market_data$us |&gt; rename(us_equity_return = monthly_return), by = "date") |&gt;</span></span>
+<span id="cb9-126"><a href="#cb9-126" aria-hidden="true" tabindex="-1"></a><span class="in">  inner_join(market_data$intl |&gt; rename(intl_equity_return = monthly_return), by = "date") |&gt;</span></span>
+<span id="cb9-127"><a href="#cb9-127" aria-hidden="true" tabindex="-1"></a><span class="in">  inner_join(market_data$bond |&gt; rename(bond_return = monthly_return), by = "date") |&gt;</span></span>
+<span id="cb9-128"><a href="#cb9-128" aria-hidden="true" tabindex="-1"></a><span class="in">  drop_na() |&gt;</span></span>
+<span id="cb9-129"><a href="#cb9-129" aria-hidden="true" tabindex="-1"></a><span class="in">  filter(date &gt;= max(date) - years(20)) |&gt;</span></span>
+<span id="cb9-130"><a href="#cb9-130" aria-hidden="true" tabindex="-1"></a><span class="in">  distinct(date, .keep_all = TRUE)</span></span>
+<span id="cb9-131"><a href="#cb9-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-132"><a href="#cb9-132" aria-hidden="true" tabindex="-1"></a><span class="in">combined_monthly_data |&gt; </span></span>
+<span id="cb9-133"><a href="#cb9-133" aria-hidden="true" tabindex="-1"></a><span class="in">  slice_tail(n = 5) |&gt;</span></span>
+<span id="cb9-134"><a href="#cb9-134" aria-hidden="true" tabindex="-1"></a><span class="in">  gt() |&gt;</span></span>
+<span id="cb9-135"><a href="#cb9-135" aria-hidden="true" tabindex="-1"></a><span class="in">  fmt_percent(columns = -date) |&gt;</span></span>
+<span id="cb9-136"><a href="#cb9-136" aria-hidden="true" tabindex="-1"></a><span class="in">  tab_header(title = "Historical Monthly Economic Data (Recent)")</span></span>
+<span id="cb9-137"><a href="#cb9-137" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-138"><a href="#cb9-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-139"><a href="#cb9-139" aria-hidden="true" tabindex="-1"></a><span class="in">```{r correlation-plot}</span></span>
+<span id="cb9-140"><a href="#cb9-140" aria-hidden="true" tabindex="-1"></a><span class="in">cor_mat &lt;- cor(select(combined_monthly_data, -date))</span></span>
+<span id="cb9-141"><a href="#cb9-141" aria-hidden="true" tabindex="-1"></a><span class="in">plot_ly(</span></span>
+<span id="cb9-142"><a href="#cb9-142" aria-hidden="true" tabindex="-1"></a><span class="in">  x = colnames(cor_mat), </span></span>
+<span id="cb9-143"><a href="#cb9-143" aria-hidden="true" tabindex="-1"></a><span class="in">  y = colnames(cor_mat), </span></span>
+<span id="cb9-144"><a href="#cb9-144" aria-hidden="true" tabindex="-1"></a><span class="in">  z = cor_mat, </span></span>
+<span id="cb9-145"><a href="#cb9-145" aria-hidden="true" tabindex="-1"></a><span class="in">  type = "heatmap",</span></span>
+<span id="cb9-146"><a href="#cb9-146" aria-hidden="true" tabindex="-1"></a><span class="in">  colors = colorRamp(c("#D55E00", "white", "#0072B2"))</span></span>
+<span id="cb9-147"><a href="#cb9-147" aria-hidden="true" tabindex="-1"></a><span class="in">) |&gt; </span></span>
+<span id="cb9-148"><a href="#cb9-148" aria-hidden="true" tabindex="-1"></a><span class="in">  layout(title = "Correlation Matrix of Monthly Returns")</span></span>
+<span id="cb9-149"><a href="#cb9-149" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-150"><a href="#cb9-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-151"><a href="#cb9-151" aria-hidden="true" tabindex="-1"></a><span class="fu">## Retirement Plan Logic</span></span>
+<span id="cb9-152"><a href="#cb9-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-153"><a href="#cb9-153" aria-hidden="true" tabindex="-1"></a><span class="in">```{r trs-logic}</span></span>
+<span id="cb9-154"><a href="#cb9-154" aria-hidden="true" tabindex="-1"></a><span class="in">calculate_trs_benefit &lt;- function(salary_history, retirement_month) {</span></span>
+<span id="cb9-155"><a href="#cb9-155" aria-hidden="true" tabindex="-1"></a><span class="in">  fas &lt;- salary_history |&gt;</span></span>
+<span id="cb9-156"><a href="#cb9-156" aria-hidden="true" tabindex="-1"></a><span class="in">    filter(month &lt;= retirement_month, month &gt; (retirement_month - 36)) |&gt;</span></span>
+<span id="cb9-157"><a href="#cb9-157" aria-hidden="true" tabindex="-1"></a><span class="in">    summarize(fas = mean(salary_annual)) |&gt;</span></span>
+<span id="cb9-158"><a href="#cb9-158" aria-hidden="true" tabindex="-1"></a><span class="in">    pull(fas)</span></span>
+<span id="cb9-159"><a href="#cb9-159" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-160"><a href="#cb9-160" aria-hidden="true" tabindex="-1"></a><span class="in">  years_service &lt;- retirement_month / 12</span></span>
+<span id="cb9-161"><a href="#cb9-161" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-162"><a href="#cb9-162" aria-hidden="true" tabindex="-1"></a><span class="in">  benefit_pct &lt;- case_when(</span></span>
+<span id="cb9-163"><a href="#cb9-163" aria-hidden="true" tabindex="-1"></a><span class="in">    years_service &lt; 20 ~ 0.0167 * years_service,</span></span>
+<span id="cb9-164"><a href="#cb9-164" aria-hidden="true" tabindex="-1"></a><span class="in">    years_service == 20 ~ 0.35,</span></span>
+<span id="cb9-165"><a href="#cb9-165" aria-hidden="true" tabindex="-1"></a><span class="in">    TRUE ~ 0.35 + 0.02 * (years_service - 20)</span></span>
+<span id="cb9-166"><a href="#cb9-166" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb9-167"><a href="#cb9-167" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-168"><a href="#cb9-168" aria-hidden="true" tabindex="-1"></a><span class="in">  benefit_pct * fas / 12</span></span>
+<span id="cb9-169"><a href="#cb9-169" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-170"><a href="#cb9-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-171"><a href="#cb9-171" aria-hidden="true" tabindex="-1"></a><span class="in">apply_trs_cola &lt;- function(current_benefit, annual_cpi) {</span></span>
+<span id="cb9-172"><a href="#cb9-172" aria-hidden="true" tabindex="-1"></a><span class="in">  adj &lt;- ceiling((annual_cpi * 0.5 * 100) * 10) / 10</span></span>
+<span id="cb9-173"><a href="#cb9-173" aria-hidden="true" tabindex="-1"></a><span class="in">  adj &lt;- pmin(pmax(adj, 1.0), 3.0) / 100</span></span>
+<span id="cb9-174"><a href="#cb9-174" aria-hidden="true" tabindex="-1"></a><span class="in">  current_benefit * (1 + adj)</span></span>
+<span id="cb9-175"><a href="#cb9-175" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-176"><a href="#cb9-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-177"><a href="#cb9-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-178"><a href="#cb9-178" aria-hidden="true" tabindex="-1"></a><span class="in">```{r orp-logic}</span></span>
+<span id="cb9-179"><a href="#cb9-179" aria-hidden="true" tabindex="-1"></a><span class="in">get_asset_allocation &lt;- function(age) {</span></span>
+<span id="cb9-180"><a href="#cb9-180" aria-hidden="true" tabindex="-1"></a><span class="in">  if (age &lt; 50) list(us = 0.54, intl = 0.36, bond = 0.10, short = 0.00)</span></span>
+<span id="cb9-181"><a href="#cb9-181" aria-hidden="true" tabindex="-1"></a><span class="in">  else if (age &lt; 60) list(us = 0.47, intl = 0.32, bond = 0.21, short = 0.00)</span></span>
+<span id="cb9-182"><a href="#cb9-182" aria-hidden="true" tabindex="-1"></a><span class="in">  else if (age &lt; 75) list(us = 0.34, intl = 0.23, bond = 0.43, short = 0.00)</span></span>
+<span id="cb9-183"><a href="#cb9-183" aria-hidden="true" tabindex="-1"></a><span class="in">  else list(us = 0.19, intl = 0.13, bond = 0.62, short = 0.06)</span></span>
+<span id="cb9-184"><a href="#cb9-184" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-185"><a href="#cb9-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-186"><a href="#cb9-186" aria-hidden="true" tabindex="-1"></a><span class="in">get_contribution_rate &lt;- function(salary) {</span></span>
+<span id="cb9-187"><a href="#cb9-187" aria-hidden="true" tabindex="-1"></a><span class="in">  if (salary &lt;= 45000) 0.03</span></span>
+<span id="cb9-188"><a href="#cb9-188" aria-hidden="true" tabindex="-1"></a><span class="in">  else if (salary &lt;= 55000) 0.035</span></span>
+<span id="cb9-189"><a href="#cb9-189" aria-hidden="true" tabindex="-1"></a><span class="in">  else if (salary &lt;= 75000) 0.045</span></span>
+<span id="cb9-190"><a href="#cb9-190" aria-hidden="true" tabindex="-1"></a><span class="in">  else if (salary &lt;= 100000) 0.0575</span></span>
+<span id="cb9-191"><a href="#cb9-191" aria-hidden="true" tabindex="-1"></a><span class="in">  else 0.06</span></span>
+<span id="cb9-192"><a href="#cb9-192" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-193"><a href="#cb9-193" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-194"><a href="#cb9-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-195"><a href="#cb9-195" aria-hidden="true" tabindex="-1"></a><span class="fu">## Monte Carlo Simulation</span></span>
+<span id="cb9-196"><a href="#cb9-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-197"><a href="#cb9-197" aria-hidden="true" tabindex="-1"></a><span class="in">```{r simulation-engine, cache=TRUE}</span></span>
+<span id="cb9-198"><a href="#cb9-198" aria-hidden="true" tabindex="-1"></a><span class="in">run_monte_carlo &lt;- function(n_sims = 500, start_age = 30, ret_age = 65, </span></span>
+<span id="cb9-199"><a href="#cb9-199" aria-hidden="true" tabindex="-1"></a><span class="in">                           death_age = 85, start_sal = 67784) {</span></span>
+<span id="cb9-200"><a href="#cb9-200" aria-hidden="true" tabindex="-1"></a><span class="in">  n_work &lt;- (ret_age - start_age) * 12</span></span>
+<span id="cb9-201"><a href="#cb9-201" aria-hidden="true" tabindex="-1"></a><span class="in">  n_ret &lt;- (death_age - ret_age) * 12</span></span>
+<span id="cb9-202"><a href="#cb9-202" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-203"><a href="#cb9-203" aria-hidden="true" tabindex="-1"></a><span class="in">  map_dfr(1:n_sims, function(sim) {</span></span>
+<span id="cb9-204"><a href="#cb9-204" aria-hidden="true" tabindex="-1"></a><span class="in">    work_sample &lt;- slice_sample(combined_monthly_data, n = n_work, replace = TRUE)</span></span>
+<span id="cb9-205"><a href="#cb9-205" aria-hidden="true" tabindex="-1"></a><span class="in">    ret_sample &lt;- slice_sample(combined_monthly_data, n = n_ret, replace = TRUE)</span></span>
+<span id="cb9-206"><a href="#cb9-206" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-207"><a href="#cb9-207" aria-hidden="true" tabindex="-1"></a><span class="in">    # Accumulation phase</span></span>
+<span id="cb9-208"><a href="#cb9-208" aria-hidden="true" tabindex="-1"></a><span class="in">    salary_hist &lt;- tibble(month = 1:n_work) |&gt;</span></span>
+<span id="cb9-209"><a href="#cb9-209" aria-hidden="true" tabindex="-1"></a><span class="in">      mutate(</span></span>
+<span id="cb9-210"><a href="#cb9-210" aria-hidden="true" tabindex="-1"></a><span class="in">        wage_growth = work_sample$wage_monthly_change,</span></span>
+<span id="cb9-211"><a href="#cb9-211" aria-hidden="true" tabindex="-1"></a><span class="in">        salary_monthly = (start_sal / 12) * cumprod(1 + wage_growth),</span></span>
+<span id="cb9-212"><a href="#cb9-212" aria-hidden="true" tabindex="-1"></a><span class="in">        salary_annual = salary_monthly * 12,</span></span>
+<span id="cb9-213"><a href="#cb9-213" aria-hidden="true" tabindex="-1"></a><span class="in">        age = start_age + (month / 12)</span></span>
+<span id="cb9-214"><a href="#cb9-214" aria-hidden="true" tabindex="-1"></a><span class="in">      )</span></span>
+<span id="cb9-215"><a href="#cb9-215" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-216"><a href="#cb9-216" aria-hidden="true" tabindex="-1"></a><span class="in">    trs_monthly &lt;- calculate_trs_benefit(salary_hist, n_work)</span></span>
+<span id="cb9-217"><a href="#cb9-217" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-218"><a href="#cb9-218" aria-hidden="true" tabindex="-1"></a><span class="in">    # ORP accumulation</span></span>
+<span id="cb9-219"><a href="#cb9-219" aria-hidden="true" tabindex="-1"></a><span class="in">    orp_bal &lt;- 0</span></span>
+<span id="cb9-220"><a href="#cb9-220" aria-hidden="true" tabindex="-1"></a><span class="in">    for (i in 1:n_work) {</span></span>
+<span id="cb9-221"><a href="#cb9-221" aria-hidden="true" tabindex="-1"></a><span class="in">      emp_rate &lt;- get_contribution_rate(salary_hist$salary_annual[i])</span></span>
+<span id="cb9-222"><a href="#cb9-222" aria-hidden="true" tabindex="-1"></a><span class="in">      empr_rate &lt;- if_else(i / 12 &lt;= 7, 0.08, 0.10)</span></span>
+<span id="cb9-223"><a href="#cb9-223" aria-hidden="true" tabindex="-1"></a><span class="in">      contrib &lt;- salary_hist$salary_monthly[i] * (emp_rate + empr_rate)</span></span>
+<span id="cb9-224"><a href="#cb9-224" aria-hidden="true" tabindex="-1"></a><span class="in">      </span></span>
+<span id="cb9-225"><a href="#cb9-225" aria-hidden="true" tabindex="-1"></a><span class="in">      alloc &lt;- get_asset_allocation(salary_hist$age[i])</span></span>
+<span id="cb9-226"><a href="#cb9-226" aria-hidden="true" tabindex="-1"></a><span class="in">      ret &lt;- alloc$us * work_sample$us_equity_return[i] +</span></span>
+<span id="cb9-227"><a href="#cb9-227" aria-hidden="true" tabindex="-1"></a><span class="in">             alloc$intl * work_sample$intl_equity_return[i] +</span></span>
+<span id="cb9-228"><a href="#cb9-228" aria-hidden="true" tabindex="-1"></a><span class="in">             alloc$bond * work_sample$bond_return[i] +</span></span>
+<span id="cb9-229"><a href="#cb9-229" aria-hidden="true" tabindex="-1"></a><span class="in">             alloc$short * work_sample$treasury_monthly_return[i]</span></span>
+<span id="cb9-230"><a href="#cb9-230" aria-hidden="true" tabindex="-1"></a><span class="in">      </span></span>
+<span id="cb9-231"><a href="#cb9-231" aria-hidden="true" tabindex="-1"></a><span class="in">      orp_bal &lt;- orp_bal * (1 + ret) + contrib</span></span>
+<span id="cb9-232"><a href="#cb9-232" aria-hidden="true" tabindex="-1"></a><span class="in">    }</span></span>
+<span id="cb9-233"><a href="#cb9-233" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-234"><a href="#cb9-234" aria-hidden="true" tabindex="-1"></a><span class="in">    # Decumulation phase</span></span>
+<span id="cb9-235"><a href="#cb9-235" aria-hidden="true" tabindex="-1"></a><span class="in">    trs_total &lt;- 0</span></span>
+<span id="cb9-236"><a href="#cb9-236" aria-hidden="true" tabindex="-1"></a><span class="in">    orp_total &lt;- 0</span></span>
+<span id="cb9-237"><a href="#cb9-237" aria-hidden="true" tabindex="-1"></a><span class="in">    curr_withdraw &lt;- orp_bal * 0.04 / 12</span></span>
+<span id="cb9-238"><a href="#cb9-238" aria-hidden="true" tabindex="-1"></a><span class="in">    orp_curr &lt;- orp_bal</span></span>
+<span id="cb9-239"><a href="#cb9-239" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-240"><a href="#cb9-240" aria-hidden="true" tabindex="-1"></a><span class="in">    for (j in 1:n_ret) {</span></span>
+<span id="cb9-241"><a href="#cb9-241" aria-hidden="true" tabindex="-1"></a><span class="in">      if (j &gt; 12 &amp;&amp; (j - 1) %% 12 == 0) {</span></span>
+<span id="cb9-242"><a href="#cb9-242" aria-hidden="true" tabindex="-1"></a><span class="in">        annual_cpi &lt;- prod(1 + ret_sample$cpi_monthly_change[(j - 12):(j - 1)]) - 1</span></span>
+<span id="cb9-243"><a href="#cb9-243" aria-hidden="true" tabindex="-1"></a><span class="in">        trs_monthly &lt;- apply_trs_cola(trs_monthly, annual_cpi)</span></span>
+<span id="cb9-244"><a href="#cb9-244" aria-hidden="true" tabindex="-1"></a><span class="in">        curr_withdraw &lt;- curr_withdraw * (1 + annual_cpi)</span></span>
+<span id="cb9-245"><a href="#cb9-245" aria-hidden="true" tabindex="-1"></a><span class="in">      }</span></span>
+<span id="cb9-246"><a href="#cb9-246" aria-hidden="true" tabindex="-1"></a><span class="in">      </span></span>
+<span id="cb9-247"><a href="#cb9-247" aria-hidden="true" tabindex="-1"></a><span class="in">      trs_total &lt;- trs_total + trs_monthly</span></span>
+<span id="cb9-248"><a href="#cb9-248" aria-hidden="true" tabindex="-1"></a><span class="in">      </span></span>
+<span id="cb9-249"><a href="#cb9-249" aria-hidden="true" tabindex="-1"></a><span class="in">      if (orp_curr &gt; 0) {</span></span>
+<span id="cb9-250"><a href="#cb9-250" aria-hidden="true" tabindex="-1"></a><span class="in">        amt &lt;- min(curr_withdraw, orp_curr)</span></span>
+<span id="cb9-251"><a href="#cb9-251" aria-hidden="true" tabindex="-1"></a><span class="in">        orp_total &lt;- orp_total + amt</span></span>
+<span id="cb9-252"><a href="#cb9-252" aria-hidden="true" tabindex="-1"></a><span class="in">        orp_curr &lt;- orp_curr - amt</span></span>
+<span id="cb9-253"><a href="#cb9-253" aria-hidden="true" tabindex="-1"></a><span class="in">        </span></span>
+<span id="cb9-254"><a href="#cb9-254" aria-hidden="true" tabindex="-1"></a><span class="in">        alloc &lt;- get_asset_allocation(ret_age + j / 12)</span></span>
+<span id="cb9-255"><a href="#cb9-255" aria-hidden="true" tabindex="-1"></a><span class="in">        ret &lt;- alloc$us * ret_sample$us_equity_return[j] +</span></span>
+<span id="cb9-256"><a href="#cb9-256" aria-hidden="true" tabindex="-1"></a><span class="in">               alloc$intl * ret_sample$intl_equity_return[j] +</span></span>
+<span id="cb9-257"><a href="#cb9-257" aria-hidden="true" tabindex="-1"></a><span class="in">               alloc$bond * ret_sample$bond_return[j] +</span></span>
+<span id="cb9-258"><a href="#cb9-258" aria-hidden="true" tabindex="-1"></a><span class="in">               alloc$short * ret_sample$treasury_monthly_return[j]</span></span>
+<span id="cb9-259"><a href="#cb9-259" aria-hidden="true" tabindex="-1"></a><span class="in">        </span></span>
+<span id="cb9-260"><a href="#cb9-260" aria-hidden="true" tabindex="-1"></a><span class="in">        orp_curr &lt;- max(0, orp_curr * (1 + ret))</span></span>
+<span id="cb9-261"><a href="#cb9-261" aria-hidden="true" tabindex="-1"></a><span class="in">      }</span></span>
+<span id="cb9-262"><a href="#cb9-262" aria-hidden="true" tabindex="-1"></a><span class="in">    }</span></span>
+<span id="cb9-263"><a href="#cb9-263" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-264"><a href="#cb9-264" aria-hidden="true" tabindex="-1"></a><span class="in">    tibble(</span></span>
+<span id="cb9-265"><a href="#cb9-265" aria-hidden="true" tabindex="-1"></a><span class="in">      sim = sim,</span></span>
+<span id="cb9-266"><a href="#cb9-266" aria-hidden="true" tabindex="-1"></a><span class="in">      trs_total = trs_total,</span></span>
+<span id="cb9-267"><a href="#cb9-267" aria-hidden="true" tabindex="-1"></a><span class="in">      orp_total = orp_total,</span></span>
+<span id="cb9-268"><a href="#cb9-268" aria-hidden="true" tabindex="-1"></a><span class="in">      orp_better = orp_total &gt; trs_total,</span></span>
+<span id="cb9-269"><a href="#cb9-269" aria-hidden="true" tabindex="-1"></a><span class="in">      depleted = orp_curr == 0,</span></span>
+<span id="cb9-270"><a href="#cb9-270" aria-hidden="true" tabindex="-1"></a><span class="in">      final_balance = orp_curr</span></span>
+<span id="cb9-271"><a href="#cb9-271" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb9-272"><a href="#cb9-272" aria-hidden="true" tabindex="-1"></a><span class="in">  })</span></span>
+<span id="cb9-273"><a href="#cb9-273" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-274"><a href="#cb9-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-275"><a href="#cb9-275" aria-hidden="true" tabindex="-1"></a><span class="in">sim_results &lt;- run_monte_carlo()</span></span>
+<span id="cb9-276"><a href="#cb9-276" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-277"><a href="#cb9-277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-278"><a href="#cb9-278" aria-hidden="true" tabindex="-1"></a><span class="fu">## Results</span></span>
+<span id="cb9-279"><a href="#cb9-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-280"><a href="#cb9-280" aria-hidden="true" tabindex="-1"></a><span class="in">```{r results-plot}</span></span>
+<span id="cb9-281"><a href="#cb9-281" aria-hidden="true" tabindex="-1"></a><span class="in">plot_ly(alpha = 0.7) |&gt;</span></span>
+<span id="cb9-282"><a href="#cb9-282" aria-hidden="true" tabindex="-1"></a><span class="in">  add_histogram(</span></span>
+<span id="cb9-283"><a href="#cb9-283" aria-hidden="true" tabindex="-1"></a><span class="in">    x = sim_results$trs_total / 1000, </span></span>
+<span id="cb9-284"><a href="#cb9-284" aria-hidden="true" tabindex="-1"></a><span class="in">    name = "TRS Total ($K)",</span></span>
+<span id="cb9-285"><a href="#cb9-285" aria-hidden="true" tabindex="-1"></a><span class="in">    marker = list(line = list(width = 1, color = "white"))</span></span>
+<span id="cb9-286"><a href="#cb9-286" aria-hidden="true" tabindex="-1"></a><span class="in">  ) |&gt;</span></span>
+<span id="cb9-287"><a href="#cb9-287" aria-hidden="true" tabindex="-1"></a><span class="in">  add_histogram(x = sim_results$orp_total / 1000, name = "ORP Total ($K)") |&gt;</span></span>
+<span id="cb9-288"><a href="#cb9-288" aria-hidden="true" tabindex="-1"></a><span class="in">  layout(</span></span>
+<span id="cb9-289"><a href="#cb9-289" aria-hidden="true" tabindex="-1"></a><span class="in">    barmode = "overlay", </span></span>
+<span id="cb9-290"><a href="#cb9-290" aria-hidden="true" tabindex="-1"></a><span class="in">    title = "Distribution of Total Retirement Income",</span></span>
+<span id="cb9-291"><a href="#cb9-291" aria-hidden="true" tabindex="-1"></a><span class="in">    xaxis = list(title = "Total Income ($K)"),</span></span>
+<span id="cb9-292"><a href="#cb9-292" aria-hidden="true" tabindex="-1"></a><span class="in">    yaxis = list(title = "Frequency (Log Scale)", type = "log")</span></span>
+<span id="cb9-293"><a href="#cb9-293" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb9-294"><a href="#cb9-294" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-295"><a href="#cb9-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-296"><a href="#cb9-296" aria-hidden="true" tabindex="-1"></a>**Risk of Ruin:** ORP depleted funds before death in <span class="in">`r percent(mean(sim_results$depleted))`</span> of scenarios.</span>
+<span id="cb9-297"><a href="#cb9-297" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-298"><a href="#cb9-298" aria-hidden="true" tabindex="-1"></a>**Income Superiority:** ORP provided higher total income in <span class="in">`r percent(mean(sim_results$orp_better))`</span> of scenarios.</span>
+<span id="cb9-299"><a href="#cb9-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-300"><a href="#cb9-300" aria-hidden="true" tabindex="-1"></a><span class="fu">## Recommendation</span></span>
+<span id="cb9-301"><a href="#cb9-301" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-302"><a href="#cb9-302" aria-hidden="true" tabindex="-1"></a>Based on the Monte Carlo simulation, **TRS is recommended** for faculty starting at age 30 with moderate risk tolerance.</span>
+<span id="cb9-303"><a href="#cb9-303" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-304"><a href="#cb9-304" aria-hidden="true" tabindex="-1"></a>**Key Trade-offs:**</span>
+<span id="cb9-305"><a href="#cb9-305" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-306"><a href="#cb9-306" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**TRS:** Provides predictable, inflation-adjusted income around $3,500/month, eliminating longevity risk</span>
+<span id="cb9-307"><a href="#cb9-307" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**ORP:** Offers upside potential (some scenarios exceed $12,000/month), but most likely outcome ($2,000-$3,000/month) is lower than TRS</span>
+<span id="cb9-308"><a href="#cb9-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-309"><a href="#cb9-309" aria-hidden="true" tabindex="-1"></a>For risk-neutral or risk-averse individuals, TRS offers a superior income floor. ORP is only preferable if willing to accept &gt;50% chance of underperformance in exchange for small probability of significant wealth.</span>
+<span id="cb9-310"><a href="#cb9-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-311"><a href="#cb9-311" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sensitivity Analysis</span></span>
+<span id="cb9-312"><a href="#cb9-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-313"><a href="#cb9-313" aria-hidden="true" tabindex="-1"></a><span class="in">```{r sensitivity-analysis}</span></span>
+<span id="cb9-314"><a href="#cb9-314" aria-hidden="true" tabindex="-1"></a><span class="in">run_sim_for_age &lt;- function(ret_age_input, n_sims = 200) {</span></span>
+<span id="cb9-315"><a href="#cb9-315" aria-hidden="true" tabindex="-1"></a><span class="in">  start_age &lt;- 30</span></span>
+<span id="cb9-316"><a href="#cb9-316" aria-hidden="true" tabindex="-1"></a><span class="in">  death_age &lt;- 85</span></span>
+<span id="cb9-317"><a href="#cb9-317" aria-hidden="true" tabindex="-1"></a><span class="in">  start_sal &lt;- 67784</span></span>
+<span id="cb9-318"><a href="#cb9-318" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-319"><a href="#cb9-319" aria-hidden="true" tabindex="-1"></a><span class="in">  n_work &lt;- (ret_age_input - start_age) * 12</span></span>
+<span id="cb9-320"><a href="#cb9-320" aria-hidden="true" tabindex="-1"></a><span class="in">  n_ret &lt;- (death_age - ret_age_input) * 12</span></span>
+<span id="cb9-321"><a href="#cb9-321" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-322"><a href="#cb9-322" aria-hidden="true" tabindex="-1"></a><span class="in">  results &lt;- map_dfr(1:n_sims, function(sim) {</span></span>
+<span id="cb9-323"><a href="#cb9-323" aria-hidden="true" tabindex="-1"></a><span class="in">    work_sample &lt;- slice_sample(combined_monthly_data, n = n_work, replace = TRUE)</span></span>
+<span id="cb9-324"><a href="#cb9-324" aria-hidden="true" tabindex="-1"></a><span class="in">    ret_sample &lt;- slice_sample(combined_monthly_data, n = n_ret, replace = TRUE)</span></span>
+<span id="cb9-325"><a href="#cb9-325" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-326"><a href="#cb9-326" aria-hidden="true" tabindex="-1"></a><span class="in">    salary_hist &lt;- tibble(month = 1:n_work) |&gt;</span></span>
+<span id="cb9-327"><a href="#cb9-327" aria-hidden="true" tabindex="-1"></a><span class="in">      mutate(</span></span>
+<span id="cb9-328"><a href="#cb9-328" aria-hidden="true" tabindex="-1"></a><span class="in">        wage_growth = work_sample$wage_monthly_change,</span></span>
+<span id="cb9-329"><a href="#cb9-329" aria-hidden="true" tabindex="-1"></a><span class="in">        salary_monthly = (start_sal / 12) * cumprod(1 + wage_growth),</span></span>
+<span id="cb9-330"><a href="#cb9-330" aria-hidden="true" tabindex="-1"></a><span class="in">        salary_annual = salary_monthly * 12,</span></span>
+<span id="cb9-331"><a href="#cb9-331" aria-hidden="true" tabindex="-1"></a><span class="in">        age = start_age + (month / 12)</span></span>
+<span id="cb9-332"><a href="#cb9-332" aria-hidden="true" tabindex="-1"></a><span class="in">      )</span></span>
+<span id="cb9-333"><a href="#cb9-333" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-334"><a href="#cb9-334" aria-hidden="true" tabindex="-1"></a><span class="in">    trs_monthly &lt;- calculate_trs_benefit(salary_hist, n_work)</span></span>
+<span id="cb9-335"><a href="#cb9-335" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-336"><a href="#cb9-336" aria-hidden="true" tabindex="-1"></a><span class="in">    orp_bal &lt;- 0</span></span>
+<span id="cb9-337"><a href="#cb9-337" aria-hidden="true" tabindex="-1"></a><span class="in">    for (i in 1:n_work) {</span></span>
+<span id="cb9-338"><a href="#cb9-338" aria-hidden="true" tabindex="-1"></a><span class="in">      emp_rate &lt;- get_contribution_rate(salary_hist$salary_annual[i])</span></span>
+<span id="cb9-339"><a href="#cb9-339" aria-hidden="true" tabindex="-1"></a><span class="in">      er_rate &lt;- if (i / 12 &lt;= 7) 0.08 else 0.10</span></span>
+<span id="cb9-340"><a href="#cb9-340" aria-hidden="true" tabindex="-1"></a><span class="in">      contrib &lt;- salary_hist$salary_monthly[i] * (emp_rate + er_rate)</span></span>
+<span id="cb9-341"><a href="#cb9-341" aria-hidden="true" tabindex="-1"></a><span class="in">      </span></span>
+<span id="cb9-342"><a href="#cb9-342" aria-hidden="true" tabindex="-1"></a><span class="in">      alloc &lt;- get_asset_allocation(salary_hist$age[i])</span></span>
+<span id="cb9-343"><a href="#cb9-343" aria-hidden="true" tabindex="-1"></a><span class="in">      ret &lt;- alloc$us * work_sample$us_equity_return[i] +</span></span>
+<span id="cb9-344"><a href="#cb9-344" aria-hidden="true" tabindex="-1"></a><span class="in">             alloc$intl * work_sample$intl_equity_return[i] +</span></span>
+<span id="cb9-345"><a href="#cb9-345" aria-hidden="true" tabindex="-1"></a><span class="in">             alloc$bond * work_sample$bond_return[i] +</span></span>
+<span id="cb9-346"><a href="#cb9-346" aria-hidden="true" tabindex="-1"></a><span class="in">             alloc$short * work_sample$treasury_monthly_return[i]</span></span>
+<span id="cb9-347"><a href="#cb9-347" aria-hidden="true" tabindex="-1"></a><span class="in">      </span></span>
+<span id="cb9-348"><a href="#cb9-348" aria-hidden="true" tabindex="-1"></a><span class="in">      orp_bal &lt;- orp_bal * (1 + ret) + contrib</span></span>
+<span id="cb9-349"><a href="#cb9-349" aria-hidden="true" tabindex="-1"></a><span class="in">    }</span></span>
+<span id="cb9-350"><a href="#cb9-350" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-351"><a href="#cb9-351" aria-hidden="true" tabindex="-1"></a><span class="in">    trs_lifetime &lt;- trs_monthly * n_ret</span></span>
+<span id="cb9-352"><a href="#cb9-352" aria-hidden="true" tabindex="-1"></a><span class="in">    orp_lifetime &lt;- (orp_bal * 0.04) * (n_ret / 12)</span></span>
+<span id="cb9-353"><a href="#cb9-353" aria-hidden="true" tabindex="-1"></a><span class="in">    </span></span>
+<span id="cb9-354"><a href="#cb9-354" aria-hidden="true" tabindex="-1"></a><span class="in">    tibble(orp_better = orp_lifetime &gt; trs_lifetime)</span></span>
+<span id="cb9-355"><a href="#cb9-355" aria-hidden="true" tabindex="-1"></a><span class="in">  })</span></span>
+<span id="cb9-356"><a href="#cb9-356" aria-hidden="true" tabindex="-1"></a><span class="in">  </span></span>
+<span id="cb9-357"><a href="#cb9-357" aria-hidden="true" tabindex="-1"></a><span class="in">  tibble(</span></span>
+<span id="cb9-358"><a href="#cb9-358" aria-hidden="true" tabindex="-1"></a><span class="in">    Retirement_Age = ret_age_input,</span></span>
+<span id="cb9-359"><a href="#cb9-359" aria-hidden="true" tabindex="-1"></a><span class="in">    ORP_Win_Rate = mean(results$orp_better)</span></span>
+<span id="cb9-360"><a href="#cb9-360" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb9-361"><a href="#cb9-361" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb9-362"><a href="#cb9-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-363"><a href="#cb9-363" aria-hidden="true" tabindex="-1"></a><span class="in">sensitivity_results &lt;- bind_rows(</span></span>
+<span id="cb9-364"><a href="#cb9-364" aria-hidden="true" tabindex="-1"></a><span class="in">  run_sim_for_age(55),</span></span>
+<span id="cb9-365"><a href="#cb9-365" aria-hidden="true" tabindex="-1"></a><span class="in">  run_sim_for_age(60),</span></span>
+<span id="cb9-366"><a href="#cb9-366" aria-hidden="true" tabindex="-1"></a><span class="in">  run_sim_for_age(65),</span></span>
+<span id="cb9-367"><a href="#cb9-367" aria-hidden="true" tabindex="-1"></a><span class="in">  run_sim_for_age(70)</span></span>
+<span id="cb9-368"><a href="#cb9-368" aria-hidden="true" tabindex="-1"></a><span class="in">)</span></span>
+<span id="cb9-369"><a href="#cb9-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-370"><a href="#cb9-370" aria-hidden="true" tabindex="-1"></a><span class="in">p &lt;- ggplot(sensitivity_results, aes(x = Retirement_Age, y = ORP_Win_Rate)) +</span></span>
+<span id="cb9-371"><a href="#cb9-371" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_line(color = "#2c3e50", linewidth = 1) +</span></span>
+<span id="cb9-372"><a href="#cb9-372" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_point(color = "#e67e22", size = 3) +</span></span>
+<span id="cb9-373"><a href="#cb9-373" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_y_continuous(labels = percent) +</span></span>
+<span id="cb9-374"><a href="#cb9-374" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(</span></span>
+<span id="cb9-375"><a href="#cb9-375" aria-hidden="true" tabindex="-1"></a><span class="in">    title = "Sensitivity Analysis: ORP Win Rate vs. Retirement Age",</span></span>
+<span id="cb9-376"><a href="#cb9-376" aria-hidden="true" tabindex="-1"></a><span class="in">    subtitle = "Does working longer favor the investment-based plan?",</span></span>
+<span id="cb9-377"><a href="#cb9-377" aria-hidden="true" tabindex="-1"></a><span class="in">    x = "Retirement Age",</span></span>
+<span id="cb9-378"><a href="#cb9-378" aria-hidden="true" tabindex="-1"></a><span class="in">    y = "Probability ORP Exceeds TRS"</span></span>
+<span id="cb9-379"><a href="#cb9-379" aria-hidden="true" tabindex="-1"></a><span class="in">  ) +</span></span>
+<span id="cb9-380"><a href="#cb9-380" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal()</span></span>
+<span id="cb9-381"><a href="#cb9-381" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-382"><a href="#cb9-382" aria-hidden="true" tabindex="-1"></a><span class="in">ggplotly(p)</span></span>
+<span id="cb9-383"><a href="#cb9-383" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-384"><a href="#cb9-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-385"><a href="#cb9-385" aria-hidden="true" tabindex="-1"></a>**Analysis:** Early retirement (age 55) strongly favors TRS with ORP winning &lt;30% of the time. As retirement age increases to 70, ORP's probability of outperforming approaches 50%. Longer careers allow more time for compound growth and market recovery, making ORP more attractive for faculty planning to work into their 70s.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

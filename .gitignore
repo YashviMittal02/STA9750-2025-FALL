@@ -17,3 +17,6 @@ data/**
 **/gganim*
 
 /.quarto/
+
+# docs/ is the published site; never ignore anything inside it
+!docs/**
