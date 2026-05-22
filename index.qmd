@@ -1,0 +1,30 @@
+---
+title: "STA 9750 - Yashvi Mittal"
+---
+
+# About Me
+
+Hi! I'm **Yashvi Mittal**, a student at Baruch College taking STA 9750
+(Software Tools for Data Analysis) in Spring 2026. This site collects my
+coursework and mini-projects for the semester.
+
+## A first R block
+
+Just to confirm the site renders R code correctly:
+
+```{r}
+#| label: first-chunk
+#| echo: true
+
+x <- 1:10
+mean(x)
+```
+
+```{r}
+#| label: simple-plot
+#| fig-cap: "A simple plot to confirm graphics render."
+
+plot(1:10, (1:10)^2, type = "b",
+     xlab = "x", ylab = "x squared",
+     main = "Hello, Quarto!")
+```

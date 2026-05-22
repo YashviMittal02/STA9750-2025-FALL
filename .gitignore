@@ -1,0 +1,30 @@
+# Quarto
+/.quarto/
+**/_freeze/
+**/*_cache/
+**/*_files/
+
+# Data
+*.csv
+*.tsv
+*.tab
+*.xlsx
+*.xls
+*.zip
+
+# Output / artifacts
+*.pdf
+*.json
+*.rds
+
+# R / RStudio
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Rproj.user/
+*.Rproj
+
+# OS
+.DS_Store
+Thumbs.db
