@@ -1,10 +1,19 @@
 #!/usr/bin/env Rscript
-# Build the Quarto site and stage generated files for commit.
+if(!require("quarto")){
+    install.packages("quarto")
+}
+library(quarto)
+if(!quarto::quarto_binary_sitrep()){
+    stop("Something is wrong with your quarto installation.")
+}
+quarto::quarto_render(".")
 
-# Render the site (writes to ./docs per _quarto.yml)
-quarto::quarto_render()
+system("git add docs/*")
+if(file.exists("index.qmd")){
+    system("git add index.qmd")
+}
+if(length(Sys.glob("mp0*.qmd")) > 0){
+    system("git add mp0*.qmd")
+}
 
-# Stage everything in docs/ so the rendered output is committed.
-system2("git", c("add", "docs"))
-
-message("Site rendered to ./docs and staged for commit.")
+if(!any(grepl("rstudio", search()))){q("no")}

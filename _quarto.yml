@@ -3,16 +3,18 @@ project:
   output-dir: docs
 
 website:
-  title: "STA 9750 - Yashvi Mittal"
-  description: "Coursework and mini-projects for STA 9750 (Spring 2026)."
+  title: "STA 9750 Submission Material"
+  description:
+    Course Projects for STA 9750 at Baruch College
   site-url: "https://YashviMittal02.github.io/STA9750-2026-SPRING/"
   navbar:
     background: primary
-    left:
-      - href: index.qmd
-        text: Home
+    search: false
 
 format:
   html:
     theme: sandstone
-    toc: true
+    toc: false
+
+editor:
+  mode: source

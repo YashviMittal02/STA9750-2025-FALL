@@ -1,30 +1,32 @@
 ---
-title: "STA 9750 - Yashvi Mittal"
+title: "Yashvi Mittal"
 ---
 
-# About Me
-
-Hi! I'm **Yashvi Mittal**, a student at Baruch College taking STA 9750
-(Software Tools for Data Analysis) in Spring 2026. This site collects my
-coursework and mini-projects for the semester.
-
-## A first R block
-
-Just to confirm the site renders R code correctly:
+Hi! I'm **Yashvi Mittal**, a Master's student at **Baruch College**.
+This site collects my coursework and mini-projects for STA 9750
+(Software Tools for Data Analysis), Spring 2026.
 
 ```{r}
-#| label: first-chunk
-#| echo: true
+#| echo: false
+#| message: false
+#| warning: false
 
-x <- 1:10
-mean(x)
+if(!require("leaflet")){
+    options(repos=c(CRAN="https://cloud.r-project.org"))
+    install.packages("leaflet")
+    stopifnot(require("leaflet"))
+}
+
+baruch_longitude <- -73.98333
+baruch_latitude  <- +40.74028
+
+leaflet() |>
+  addTiles() |>
+  setView(baruch_longitude, baruch_latitude, zoom=17) |>
+  addPopups(baruch_longitude, baruch_latitude,
+            "I am a Master's student at <b>Baruch College</b>!")
 ```
 
-```{r}
-#| label: simple-plot
-#| fig-cap: "A simple plot to confirm graphics render."
+---
 
-plot(1:10, (1:10)^2, type = "b",
-     xlab = "x", ylab = "x squared",
-     main = "Hello, Quarto!")
-```
+Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
