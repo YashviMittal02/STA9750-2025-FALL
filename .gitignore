@@ -18,5 +18,15 @@ data/**
 
 /.quarto/
 
+# API keys and other secrets must never be committed
+keys/
+*.key
+*_key.txt
+.Renviron
+
+# Election data files used for mp3 renders (large, not needed in repo)
+1976-2024-house.tab
+1976-2020-president.csv
+
 # docs/ is the published site; never ignore anything inside it
 !docs/**
