@@ -143,12 +143,25 @@ standardize_results_table <- function(tbl, state_name, year) {
     ) |>
     mutate(
       county_clean = clean_county_name(county_raw),
-      total_votes = coalesce(total_votes, dem_votes + rep_votes),
+      total_votes = coalesce(total_votes, dem_votes + rep_votes)
+    ) |>
+    filter(!is.na(dem_votes), !is.na(rep_votes), !str_detect(county_clean, "total")) |>
+    # Some Wikipedia state pages (notably California) yield tables that split
+    # results by city/precinct instead of by county. Aggregate by county_clean
+    # so each county is one row regardless of how the table was sliced.
+    group_by(state, county_clean) |>
+    summarize(
+      county_raw  = first(county_raw),
+      dem_votes   = sum(dem_votes,   na.rm = TRUE),
+      rep_votes   = sum(rep_votes,   na.rm = TRUE),
+      total_votes = sum(total_votes, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(
       dem_share = dem_votes / total_votes,
       rep_share = rep_votes / total_votes,
-      year = year
-    ) |>
-    filter(!is.na(dem_votes), !is.na(rep_votes), !str_detect(county_clean, "total"))
+      year      = year
+    )
 }
 
 scrape_state_results <- function(state_name, year) {
@@ -179,19 +192,19 @@ scrape_state_results <- function(state_name, year) {
     stop("No county-level table found for ", state_name, " ", year)
   }
 
-  table_attempts <- map(county_tables, function(tbl) {
+  table_attempts <- purrr::map(county_tables, function(tbl) {
     tryCatch(
       list(result = standardize_results_table(tbl, state_name, year), error = NULL),
       error = function(e) list(result = NULL, error = conditionMessage(e))
     )
   })
 
-  standardized <- map(table_attempts, "result")
+  standardized <- purrr::map(table_attempts, "result")
   viable_tables <- compact(standardized) |>
     keep(function(tbl) nrow(tbl) > 1)
 
   if (length(viable_tables) == 0) {
-    table_errors <- compact(map(table_attempts, "error"))
+    table_errors <- compact(purrr::map(table_attempts, "error"))
     first_error <- if (length(table_errors) > 0) table_errors[[1]] else "none"
     stop(
       "No viable county result table after standardization for ", state_name, " ", year,
@@ -199,7 +212,7 @@ scrape_state_results <- function(state_name, year) {
     )
   }
 
-  viable_tables[[which.max(map_int(viable_tables, nrow))]]
+  viable_tables[[which.max(purrr::map_int(viable_tables, nrow))]]
 }
 
 states_with_county_tables <- states |>
@@ -212,8 +225,8 @@ if (file.exists(cached_results_file)) {
   results_2024 <- wikipedia_results |> filter(year == 2024)
   results_2020 <- wikipedia_results |> filter(year == 2020)
 } else {
-  results_2024 <- map_dfr(states_with_county_tables$state, scrape_state_results, year = 2024)
-  results_2020 <- map_dfr(states_with_county_tables$state, scrape_state_results, year = 2020)
+  results_2024 <- purrr::map_dfr(states_with_county_tables$state, scrape_state_results, year = 2024)
+  results_2020 <- purrr::map_dfr(states_with_county_tables$state, scrape_state_results, year = 2020)
   bind_rows(results_2024, results_2020) |>
     write_csv(cached_results_file)
 }
@@ -249,14 +262,14 @@ county_lookup <- county_shapes |>
     names_to = "key_type",
     values_to = "county_clean"
   ) |>
-  add_count(state_fips, county_clean, name = "key_matches") |>
-  filter(key_matches == 1) |>
-  select(-key_type, -key_matches) |>
-  distinct(
-    state_fips,
-    county_clean,
-    .keep_all = TRUE
-  )
+  # Within a single county, NAME ("Wilson") and NAMELSAD ("Wilson County")
+  # usually clean to the same string. Dedupe (state_fips, county_fips, county_clean)
+  # FIRST so the count below measures how many *distinct counties* share a key,
+  # not how many key variants a single county has.
+  distinct(state_fips, county_fips, county_name, area_sq_km, county_clean) |>
+  add_count(state_fips, county_clean, name = "county_matches") |>
+  filter(county_matches == 1) |>
+  select(state_fips, county_fips, county_name, area_sq_km, county_clean)
 
 results_2024 <- results_2024 |>
   left_join(states |> select(state, state_fips), join_by(state)) |>
