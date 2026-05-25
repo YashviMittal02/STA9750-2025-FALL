@@ -7576,30 +7576,29 @@ color: #333;
 </div>
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mode_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">AG =</span> <span class="st">&quot;Automated Guideway&quot;</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AR =</span> <span class="st">&quot;Alaska Railroad&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">CB =</span> <span class="st">&quot;Commuter Bus&quot;</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">CC =</span> <span class="st">&quot;Cable Car&quot;</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">CR =</span> <span class="st">&quot;Commuter Rail&quot;</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">DR =</span> <span class="st">&quot;Demand Response&quot;</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">DT =</span> <span class="st">&quot;Demand Response Taxi&quot;</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">FB =</span> <span class="st">&quot;Ferryboat&quot;</span>,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">HR =</span> <span class="st">&quot;Heavy Rail&quot;</span>,</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">IP =</span> <span class="st">&quot;Inclined Plane&quot;</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">LR =</span> <span class="st">&quot;Light Rail&quot;</span>,</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">MB =</span> <span class="st">&quot;Bus&quot;</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">MG =</span> <span class="st">&quot;Monorail/Automated Guideway&quot;</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">PB =</span> <span class="st">&quot;Publico&quot;</span>,</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">RB =</span> <span class="st">&quot;Bus Rapid Transit&quot;</span>,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">SR =</span> <span class="st">&quot;Streetcar&quot;</span>,</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">TB =</span> <span class="st">&quot;Trolleybus&quot;</span>,</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">VP =</span> <span class="st">&quot;Vanpool&quot;</span>,</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">YR =</span> <span class="st">&quot;Hybrid Rail&quot;</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>USAGE <span class="ot">&lt;-</span> USAGE <span class="sc">|&gt;</span></span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Mode =</span> <span class="fu">recode</span>(Mode, <span class="sc">!!!</span>mode_labels, <span class="at">.default =</span> <span class="st">&quot;Unknown&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>USAGE <span class="ot">&lt;-</span> USAGE <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Mode =</span> <span class="fu">case_when</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;AG&quot;</span> <span class="sc">~</span> <span class="st">&quot;Automated Guideway&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;AR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Alaska Railroad&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;CB&quot;</span> <span class="sc">~</span> <span class="st">&quot;Commuter Bus&quot;</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;CC&quot;</span> <span class="sc">~</span> <span class="st">&quot;Cable Car&quot;</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;CR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Commuter Rail&quot;</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;DR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Demand Response&quot;</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;DT&quot;</span> <span class="sc">~</span> <span class="st">&quot;Demand Response Taxi&quot;</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;FB&quot;</span> <span class="sc">~</span> <span class="st">&quot;Ferryboat&quot;</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;HR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Heavy Rail&quot;</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;IP&quot;</span> <span class="sc">~</span> <span class="st">&quot;Inclined Plane&quot;</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;LR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Light Rail&quot;</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;MB&quot;</span> <span class="sc">~</span> <span class="st">&quot;Bus&quot;</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;MG&quot;</span> <span class="sc">~</span> <span class="st">&quot;Monorail/Automated Guideway&quot;</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;PB&quot;</span> <span class="sc">~</span> <span class="st">&quot;Publico&quot;</span>,</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;RB&quot;</span> <span class="sc">~</span> <span class="st">&quot;Bus Rapid Transit&quot;</span>,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;SR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Streetcar&quot;</span>,</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;TB&quot;</span> <span class="sc">~</span> <span class="st">&quot;Trolleybus&quot;</span>,</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;VP&quot;</span> <span class="sc">~</span> <span class="st">&quot;Vanpool&quot;</span>,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    Mode <span class="sc">==</span> <span class="st">&quot;YR&quot;</span> <span class="sc">~</span> <span class="st">&quot;Hybrid Rail&quot;</span>,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span>          <span class="sc">~</span> <span class="st">&quot;Unknown&quot;</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -7655,13 +7654,23 @@ color: #333;
 <span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(month) <span class="sc">|&gt;</span></span>
 <span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">previous_trips =</span> <span class="fu">lag</span>(trips), <span class="at">percent_change =</span> (trips <span class="sc">-</span> previous_trips) <span class="sc">/</span> previous_trips)</span>
 <span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;Agency with most total VRM&quot;</span>, <span class="at">answer =</span> agency_most_vrm<span class="sc">$</span>Agency, <span class="at">value =</span> <span class="fu">comma</span>(agency_most_vrm<span class="sc">$</span>total_vrm)),</span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;Mode with most total VRM&quot;</span>, <span class="at">answer =</span> mode_most_vrm<span class="sc">$</span>Mode, <span class="at">value =</span> <span class="fu">comma</span>(mode_most_vrm<span class="sc">$</span>total_vrm)),</span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;NYC subway trips in May 2024&quot;</span>, <span class="at">answer =</span> <span class="st">&quot;NYC Subway / Heavy Rail&quot;</span>, <span class="at">value =</span> <span class="fu">comma</span>(nyc_subway_may_2024<span class="sc">$</span>trips)),</span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;NYC subway ridership change, April 2019 to April 2020&quot;</span>, <span class="at">answer =</span> <span class="st">&quot;April 2020 relative to April 2019&quot;</span>, <span class="at">value =</span> <span class="fu">percent</span>(<span class="fu">last</span>(<span class="fu">na.omit</span>(nyc_subway_april_change<span class="sc">$</span>percent_change)), <span class="at">accuracy =</span> <span class="fl">0.1</span>))</span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>mode_longest_avg_trip <span class="ot">&lt;-</span> USAGE <span class="sc">|&gt;</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">==</span> <span class="fu">ymd</span>(<span class="st">&quot;2024-05-01&quot;</span>), UPT <span class="sc">&gt;</span> <span class="dv">0</span>, VRM <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Mode) <span class="sc">|&gt;</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_trip_miles =</span> <span class="fu">sum</span>(VRM, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> <span class="fu">sum</span>(UPT, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(avg_trip_miles, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;Agency with most total VRM&quot;</span>, <span class="at">answer =</span> agency_most_vrm<span class="sc">$</span>Agency, <span class="at">value =</span> <span class="fu">comma</span>(agency_most_vrm<span class="sc">$</span>total_vrm)),</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;Mode with most total VRM&quot;</span>, <span class="at">answer =</span> mode_most_vrm<span class="sc">$</span>Mode, <span class="at">value =</span> <span class="fu">comma</span>(mode_most_vrm<span class="sc">$</span>total_vrm)),</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;NYC subway trips in May 2024&quot;</span>, <span class="at">answer =</span> <span class="st">&quot;NYC Subway / Heavy Rail&quot;</span>, <span class="at">value =</span> <span class="fu">comma</span>(nyc_subway_may_2024<span class="sc">$</span>trips)),</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;Mode with longest average trip, May 2024&quot;</span>, <span class="at">answer =</span> mode_longest_avg_trip<span class="sc">$</span>Mode, <span class="at">value =</span> <span class="fu">paste0</span>(<span class="fu">round</span>(mode_longest_avg_trip<span class="sc">$</span>avg_trip_miles, <span class="dv">2</span>), <span class="st">&quot; mi/trip&quot;</span>)),</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">question =</span> <span class="st">&quot;NYC subway ridership change, April 2019 to April 2020&quot;</span>, <span class="at">answer =</span> <span class="st">&quot;April 2020 relative to April 2019&quot;</span>, <span class="at">value =</span> <span class="fu">percent</span>(<span class="fu">last</span>(<span class="fu">na.omit</span>(nyc_subway_april_change<span class="sc">$</span>percent_change)), <span class="at">accuracy =</span> <span class="fl">0.1</span>))</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -7694,6 +7703,11 @@ color: #333;
 <td style="text-align: left;">182,327,905</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">Mode with longest average trip, May 2024</td>
+<td style="text-align: left;">Demand Response</td>
+<td style="text-align: left;">12.74 mi/trip</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">NYC subway ridership change, April 2019 to April 2020</td>
 <td style="text-align: left;">April 2020 relative to April 2019</td>
 <td style="text-align: left;">-90.9%</td>
@@ -7702,7 +7716,7 @@ color: #333;
 </table>
 </div>
 </div>
-<p>The first two answers describe the scale of service production. The NYC subway questions show the pandemic interruption: the April 2020 collapse is a structural shock, not a normal year-over-year fluctuation.</p>
+<p>The first two answers describe the scale of service production. The NYC subway questions show the pandemic interruption: the April 2020 collapse is a structural shock, not a normal year-over-year fluctuation. I was genuinely surprised by how dominant a single mode and a single agency are — before running this I expected more spread across cities.</p>
 </section>
 <section id="task-4-three-additional-transit-facts" class="level2">
 <h2 class="anchored" data-anchor-id="task-4-three-additional-transit-facts">Task 4: Three Additional Transit Facts</h2>
@@ -8139,7 +8153,7 @@ color: #333;
 </section>
 <section id="task-6-farebox-recovery-among-major-systems" class="level2">
 <h2 class="anchored" data-anchor-id="task-6-farebox-recovery-among-major-systems">Task 6: Farebox Recovery Among Major Systems</h2>
-<p>I define a major system as any agency-mode pair with at least 400,000 annual unlinked passenger trips. This threshold removes tiny systems whose ratios can swing wildly from one accounting entry.</p>
+<p>I define a major system as any agency-mode pair with at least 400,000 annual unlinked passenger trips. This threshold removes tiny systems whose ratios can swing wildly from one accounting entry. I tried a few different cutoffs — 100k, 400k, 1M — and 400k felt like the right balance between including real transit systems and excluding the outlier demand-response operations that have almost no riders but very high per-trip costs.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -8233,7 +8247,7 @@ color: #333;
 </section>
 <section id="conclusion" class="level1">
 <h1>Conclusion</h1>
-<p>The most efficient system depends on the definition of efficiency. Farebox recovery emphasizes a system’s ability to pay operating costs from fares, while expenses per trip emphasizes low-cost mobility. I give the most weight to expenses per passenger trip because it directly measures how cheaply a system provides useful rides. Farebox recovery is still important, but it can reward high fares as much as good operations. The most convincing candidates are therefore the major systems that combine high ridership, low expense per trip, and a respectable farebox recovery ratio rather than winning only one category.</p>
+<p>The most efficient system depends on how you define efficiency, and I found that no single agency wins on every metric. Farebox recovery rewards systems that collect high fares, while expenses per trip rewards systems that move a lot of people cheaply — and those two goals can pull in opposite directions. I give the most weight to expenses per passenger trip because it directly measures how cheaply a system provides useful rides, regardless of fare policy. That said, the farebox recovery numbers were genuinely surprising to me: some of the systems I expected to be well-run had shockingly low recovery, which made me reconsider what “efficient” actually means in a public-service context. The most convincing candidates for overall efficiency are systems that sit in the top half on multiple metrics rather than dominating just one.</p>
 
 
 </section>

@@ -5073,7 +5073,7 @@ vertical-align: -.125em;
 <span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Alaska is omitted from the county-equivalent election-result scrape because the 2020 Wikipedia page states that official borough-level results are not available and does not provide a scrapeable borough/census-area result table. The map below still moves Alaska into a reasonable visual position, but arrows are drawn only for county-equivalent units with comparable 2020 and 2024 Wikipedia table results.</p>
+<p>Alaska is omitted from the county-equivalent election-result scrape because the 2020 Wikipedia page states that official borough-level results are not available and does not provide a scrapeable borough/census-area result table. The map below still moves Alaska into a reasonable visual position, but arrows are drawn only for county-equivalent units with comparable 2020 and 2024 Wikipedia table results. Getting the scraper to handle all 49 states took more iteration than I expected — Wikipedia’s table formatting is inconsistent enough between states that I had to add several fallback column-detection patterns before the parser stopped failing on edge cases like Louisiana parishes and Virginia independent cities.</p>
 </section>
 </section>
 <section id="combine-data-and-initial-analyses" class="level1">
@@ -48738,7 +48738,7 @@ vertical-align: -.125em;
 <h1>Additional Data Analysis</h1>
 <section id="task-6-partisan-talking-points-and-statistical-tests" class="level2">
 <h2 class="anchored" data-anchor-id="task-6-partisan-talking-points-and-statistical-tests">Task 6: Partisan Talking Points and Statistical Tests</h2>
-<p>For this section I adopt the Democratic persona suggested by the assignment: Trump won, but the victory can be framed as narrower than the county map makes it appear.</p>
+<p>For this section I adopt the Democratic persona suggested by the assignment: Trump won, but the victory can be framed as narrower than the county map makes it appear. I found this framing exercise genuinely interesting — the same underlying numbers support very different narratives depending on whether you weight by land area, county count, or actual votes cast.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
@@ -48911,7 +48911,7 @@ vertical-align: -.125em;
 <h2 class="anchored" data-anchor-id="deliverable-partisan-talking-points">Deliverable: Partisan Talking Points</h2>
 <p>Do not let a red county map do the talking for the country. Land does not vote; people do. The 2024 result moved toward Trump, but the evidence does not require the grandiose conclusion that America entered a new political era. The average county map is visually dramatic because thousands of low-population counties cover enormous space. When shifts are weighted by actual 2024 votes, the national movement is 1.6%, while the median county shift is 1.6%. That is a real change, but not a blank check for mythmaking.</p>
 <p>The density analysis makes the point sharper. Dense counties, where more voters are packed into less geography, tell a quieter story than the wall-to-wall map of county arrows. The t-test against a five-point county shift also asks the question directly: was this really a sweeping five-point county earthquake? The answer is in the table above, and it is more modest than the loudest post-election narrative.</p>
-<p>So the Democratic argument is simple: Trump won the rules of the contest, but the visual drama overstates the mandate. The country shifted, yet unevenly. A disciplined opposition should study where turnout fell, where persuasion failed, and where small margins were allowed to become a national story.</p>
+<p>So the Democratic argument is this: Trump won the rules of the contest, but the visual drama overstates the mandate. The country shifted, yet unevenly. A disciplined opposition should study where turnout fell, where persuasion failed, and where small margins were allowed to become a national story. What struck me most while doing this analysis is how much the county-shift map — which looks overwhelming in red — changes character the moment you weight anything by population. That gap between geographic and demographic storytelling is the whole political argument in one picture.</p>
 
 
 </section>

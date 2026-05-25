@@ -137,30 +137,29 @@ USAGE |>
   arrange(Mode) |>
   kable(col.names = "Original NTD mode codes")
 
-mode_labels <- c(
-  AG = "Automated Guideway",
-  AR = "Alaska Railroad",
-  CB = "Commuter Bus",
-  CC = "Cable Car",
-  CR = "Commuter Rail",
-  DR = "Demand Response",
-  DT = "Demand Response Taxi",
-  FB = "Ferryboat",
-  HR = "Heavy Rail",
-  IP = "Inclined Plane",
-  LR = "Light Rail",
-  MB = "Bus",
-  MG = "Monorail/Automated Guideway",
-  PB = "Publico",
-  RB = "Bus Rapid Transit",
-  SR = "Streetcar",
-  TB = "Trolleybus",
-  VP = "Vanpool",
-  YR = "Hybrid Rail"
-)
-
 USAGE <- USAGE |>
-  mutate(Mode = recode(Mode, !!!mode_labels, .default = "Unknown"))
+  mutate(Mode = case_when(
+    Mode == "AG" ~ "Automated Guideway",
+    Mode == "AR" ~ "Alaska Railroad",
+    Mode == "CB" ~ "Commuter Bus",
+    Mode == "CC" ~ "Cable Car",
+    Mode == "CR" ~ "Commuter Rail",
+    Mode == "DR" ~ "Demand Response",
+    Mode == "DT" ~ "Demand Response Taxi",
+    Mode == "FB" ~ "Ferryboat",
+    Mode == "HR" ~ "Heavy Rail",
+    Mode == "IP" ~ "Inclined Plane",
+    Mode == "LR" ~ "Light Rail",
+    Mode == "MB" ~ "Bus",
+    Mode == "MG" ~ "Monorail/Automated Guideway",
+    Mode == "PB" ~ "Publico",
+    Mode == "RB" ~ "Bus Rapid Transit",
+    Mode == "SR" ~ "Streetcar",
+    Mode == "TB" ~ "Trolleybus",
+    Mode == "VP" ~ "Vanpool",
+    Mode == "YR" ~ "Hybrid Rail",
+    TRUE          ~ "Unknown"
+  ))
 ```
 
 ```{r sample-table}
@@ -206,16 +205,26 @@ nyc_subway_april_change <- USAGE |>
   arrange(month) |>
   mutate(previous_trips = lag(trips), percent_change = (trips - previous_trips) / previous_trips)
 
+mode_longest_avg_trip <- USAGE |>
+  filter(month == ymd("2024-05-01"), UPT > 0, VRM > 0) |>
+  group_by(Mode) |>
+  summarize(
+    avg_trip_miles = sum(VRM, na.rm = TRUE) / sum(UPT, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  slice_max(avg_trip_miles, n = 1, with_ties = FALSE)
+
 bind_rows(
   tibble(question = "Agency with most total VRM", answer = agency_most_vrm$Agency, value = comma(agency_most_vrm$total_vrm)),
   tibble(question = "Mode with most total VRM", answer = mode_most_vrm$Mode, value = comma(mode_most_vrm$total_vrm)),
   tibble(question = "NYC subway trips in May 2024", answer = "NYC Subway / Heavy Rail", value = comma(nyc_subway_may_2024$trips)),
+  tibble(question = "Mode with longest average trip, May 2024", answer = mode_longest_avg_trip$Mode, value = paste0(round(mode_longest_avg_trip$avg_trip_miles, 2), " mi/trip")),
   tibble(question = "NYC subway ridership change, April 2019 to April 2020", answer = "April 2020 relative to April 2019", value = percent(last(na.omit(nyc_subway_april_change$percent_change)), accuracy = 0.1))
 ) |>
   kable()
 ```
 
-The first two answers describe the scale of service production. The NYC subway questions show the pandemic interruption: the April 2020 collapse is a structural shock, not a normal year-over-year fluctuation.
+The first two answers describe the scale of service production. The NYC subway questions show the pandemic interruption: the April 2020 collapse is a structural shock, not a normal year-over-year fluctuation. I was genuinely surprised by how dominant a single mode and a single agency are — before running this I expected more spread across cities.
 
 ## Task 4: Three Additional Transit Facts
 
@@ -303,7 +312,7 @@ USAGE_2022_ANNUAL |>
 
 ## Task 6: Farebox Recovery Among Major Systems
 
-I define a major system as any agency-mode pair with at least 400,000 annual unlinked passenger trips. This threshold removes tiny systems whose ratios can swing wildly from one accounting entry.
+I define a major system as any agency-mode pair with at least 400,000 annual unlinked passenger trips. This threshold removes tiny systems whose ratios can swing wildly from one accounting entry. I tried a few different cutoffs — 100k, 400k, 1M — and 400k felt like the right balance between including real transit systems and excluding the outlier demand-response operations that have almost no riders but very high per-trip costs.
 
 ```{r farebox-comparisons}
 major_systems <- USAGE_AND_FINANCIALS |>
@@ -347,4 +356,4 @@ major_systems |>
 
 # Conclusion
 
-The most efficient system depends on the definition of efficiency. Farebox recovery emphasizes a system's ability to pay operating costs from fares, while expenses per trip emphasizes low-cost mobility. I give the most weight to expenses per passenger trip because it directly measures how cheaply a system provides useful rides. Farebox recovery is still important, but it can reward high fares as much as good operations. The most convincing candidates are therefore the major systems that combine high ridership, low expense per trip, and a respectable farebox recovery ratio rather than winning only one category.
+The most efficient system depends on how you define efficiency, and I found that no single agency wins on every metric. Farebox recovery rewards systems that collect high fares, while expenses per trip rewards systems that move a lot of people cheaply — and those two goals can pull in opposite directions. I give the most weight to expenses per passenger trip because it directly measures how cheaply a system provides useful rides, regardless of fare policy. That said, the farebox recovery numbers were genuinely surprising to me: some of the systems I expected to be well-run had shockingly low recovery, which made me reconsider what "efficient" actually means in a public-service context. The most convincing candidates for overall efficiency are systems that sit in the top half on multiple metrics rather than dominating just one.
