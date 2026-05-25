@@ -1,0 +1,350 @@
+---
+title: "STA 9750 Mini-Project #01: Fiscal Characteristics of Major US Public Transit Systems"
+author: "Yashvi Mittal"
+date: "2025-09-30"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show code"
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+  cache: true
+---
+
+# Introduction
+
+Public transit systems are public services, engineering projects, and daily economic infrastructure all at once. This report uses the National Transit Database to compare ridership, service mileage, fare revenue, and operating expenses for U.S. transit systems. The central question is not just which agency is largest, but which systems convert resources into useful service most efficiently.
+
+```{r setup}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+pkgs <- c("tidyverse", "readxl", "lubridate", "DT", "scales", "knitr")
+missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing_pkgs) > 0) install.packages(missing_pkgs)
+
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(DT)
+library(scales)
+library(knitr)
+
+dir.create("data/mp01", recursive = TRUE, showWarnings = FALSE)
+
+download_if_missing <- function(url, dest) {
+  if (file.exists(dest) && file.info(dest)$size < 10000) {
+    unlink(dest)
+  }
+
+  if (!file.exists(dest)) {
+    tryCatch(
+      download.file(url, destfile = dest, mode = "wb", quiet = FALSE, method = "libcurl"),
+      error = function(e) {
+        stop(
+          "Could not download ", url, ". The NTD site sometimes blocks scripted downloads; ",
+          "download it in a browser and save it as ", dest, ". Original error: ",
+          conditionMessage(e),
+          call. = FALSE
+        )
+      }
+    )
+  }
+  invisible(dest)
+}
+```
+
+# Data Acquisition
+
+The assignment provides three NTD sources: 2022 fare revenue, 2022 operating expenses, and the monthly ridership workbook. The code downloads each source only when it is not already present locally.
+
+```{r download-data}
+fare_file <- download_if_missing(
+  "https://www.transit.dot.gov/sites/fta.dot.gov/files/2024-04/2022%20Fare%20Revenue.xlsx",
+  "data/mp01/2022_fare_revenue.xlsx"
+)
+
+expense_file <- download_if_missing(
+  "https://data.transportation.gov/api/views/dkxx-zjd6/rows.csv?date=20231102&accessType=DOWNLOAD&bom=true&format=true",
+  "data/mp01/2022_expenses.csv"
+)
+
+ridership_file <- download_if_missing(
+  "https://www.transit.dot.gov/sites/fta.dot.gov/files/2024-09/July%202024%20Complete%20Monthly%20Ridership%20%28with%20adjustments%20and%20estimates%29_240903.xlsx",
+  "data/mp01/ridership.xlsx"
+)
+```
+
+```{r prepare-financials}
+FARES <- read_xlsx(fare_file) |>
+  select(
+    -`State/Parent NTD ID`, -`Reporter Type`, -`Reporting Module`,
+    -TOS, -`Passenger Paid Fares`, -`Organization Paid Fares`
+  ) |>
+  filter(`Expense Type` == "Funds Earned During Period") |>
+  select(-`Expense Type`) |>
+  group_by(`NTD ID`, `Agency Name`, Mode) |>
+  summarize(`Total Fares` = sum(`Total Fares`, na.rm = TRUE), .groups = "drop")
+
+EXPENSES <- read_csv(expense_file, show_col_types = FALSE) |>
+  select(`NTD ID`, Agency, Total, Mode) |>
+  mutate(`NTD ID` = as.integer(`NTD ID`)) |>
+  rename(Expenses = Total) |>
+  group_by(`NTD ID`, Mode) |>
+  summarize(Expenses = sum(Expenses, na.rm = TRUE), .groups = "drop")
+
+FINANCIALS <- inner_join(FARES, EXPENSES, join_by(`NTD ID`, Mode))
+```
+
+```{r prepare-usage}
+TRIPS <- read_xlsx(ridership_file, sheet = "UPT") |>
+  filter(`Mode/Type of Service Status` == "Active") |>
+  select(-`Legacy NTD ID`, -`Reporter Type`, -`Mode/Type of Service Status`, -`UACE CD`, -TOS) |>
+  pivot_longer(-c(`NTD ID`:`3 Mode`), names_to = "month", values_to = "UPT") |>
+  drop_na() |>
+  mutate(month = my(month))
+
+MILES <- read_xlsx(ridership_file, sheet = "VRM") |>
+  filter(`Mode/Type of Service Status` == "Active") |>
+  select(-`Legacy NTD ID`, -`Reporter Type`, -`Mode/Type of Service Status`, -`UACE CD`, -TOS) |>
+  pivot_longer(-c(`NTD ID`:`3 Mode`), names_to = "month", values_to = "VRM") |>
+  drop_na() |>
+  group_by(`NTD ID`, Agency, `UZA Name`, Mode, `3 Mode`, month) |>
+  summarize(VRM = sum(VRM, na.rm = TRUE), .groups = "drop") |>
+  mutate(month = my(month))
+
+USAGE <- inner_join(TRIPS, MILES) |>
+  mutate(`NTD ID` = as.integer(`NTD ID`))
+```
+
+# Cleaning
+
+## Task 1: Creating Syntactic Names
+
+```{r rename-columns}
+USAGE <- USAGE |>
+  rename(metro_area = `UZA Name`)
+```
+
+## Task 2: Recoding Transit Modes
+
+```{r recode-mode}
+USAGE |>
+  distinct(Mode) |>
+  arrange(Mode) |>
+  kable(col.names = "Original NTD mode codes")
+
+mode_labels <- c(
+  AG = "Automated Guideway",
+  AR = "Alaska Railroad",
+  CB = "Commuter Bus",
+  CC = "Cable Car",
+  CR = "Commuter Rail",
+  DR = "Demand Response",
+  DT = "Demand Response Taxi",
+  FB = "Ferryboat",
+  HR = "Heavy Rail",
+  IP = "Inclined Plane",
+  LR = "Light Rail",
+  MB = "Bus",
+  MG = "Monorail/Automated Guideway",
+  PB = "Publico",
+  RB = "Bus Rapid Transit",
+  SR = "Streetcar",
+  TB = "Trolleybus",
+  VP = "Vanpool",
+  YR = "Hybrid Rail"
+)
+
+USAGE <- USAGE |>
+  mutate(Mode = recode(Mode, !!!mode_labels, .default = "Unknown"))
+```
+
+```{r sample-table}
+USAGE |>
+  select(-`NTD ID`, -`3 Mode`) |>
+  rename(unlinked_passenger_trips = UPT, vehicle_revenue_miles = VRM) |>
+  sample_n(min(1000, nrow(USAGE))) |>
+  mutate(month = as.character(month)) |>
+  datatable(options = list(pageLength = 10, scrollX = TRUE))
+```
+
+# Instructor Questions
+
+## Task 3: Core Ridership Questions
+
+```{r task-3-answers}
+agency_most_vrm <- USAGE |>
+  group_by(Agency) |>
+  summarize(total_vrm = sum(VRM, na.rm = TRUE), .groups = "drop") |>
+  slice_max(total_vrm, n = 1, with_ties = FALSE)
+
+mode_most_vrm <- USAGE |>
+  group_by(Mode) |>
+  summarize(total_vrm = sum(VRM, na.rm = TRUE), .groups = "drop") |>
+  slice_max(total_vrm, n = 1, with_ties = FALSE)
+
+nyc_subway_may_2024 <- USAGE |>
+  filter(
+    str_detect(Agency, regex("Metropolitan Transportation Authority|MTA New York City Transit", ignore_case = TRUE)),
+    Mode == "Heavy Rail",
+    month == ymd("2024-05-01")
+  ) |>
+  summarize(trips = sum(UPT, na.rm = TRUE))
+
+nyc_subway_april_change <- USAGE |>
+  filter(
+    str_detect(Agency, regex("Metropolitan Transportation Authority|MTA New York City Transit", ignore_case = TRUE)),
+    Mode == "Heavy Rail",
+    month %in% ymd(c("2019-04-01", "2020-04-01"))
+  ) |>
+  group_by(month) |>
+  summarize(trips = sum(UPT, na.rm = TRUE), .groups = "drop") |>
+  arrange(month) |>
+  mutate(previous_trips = lag(trips), percent_change = (trips - previous_trips) / previous_trips)
+
+bind_rows(
+  tibble(question = "Agency with most total VRM", answer = agency_most_vrm$Agency, value = comma(agency_most_vrm$total_vrm)),
+  tibble(question = "Mode with most total VRM", answer = mode_most_vrm$Mode, value = comma(mode_most_vrm$total_vrm)),
+  tibble(question = "NYC subway trips in May 2024", answer = "NYC Subway / Heavy Rail", value = comma(nyc_subway_may_2024$trips)),
+  tibble(question = "NYC subway ridership change, April 2019 to April 2020", answer = "April 2020 relative to April 2019", value = percent(last(na.omit(nyc_subway_april_change$percent_change)), accuracy = 0.1))
+) |>
+  kable()
+```
+
+The first two answers describe the scale of service production. The NYC subway questions show the pandemic interruption: the April 2020 collapse is a structural shock, not a normal year-over-year fluctuation.
+
+## Task 4: Three Additional Transit Facts
+
+```{r extra-facts}
+latest_month <- max(USAGE$month, na.rm = TRUE)
+
+top_metros_latest <- USAGE |>
+  filter(month == latest_month) |>
+  group_by(metro_area) |>
+  summarize(trips = sum(UPT, na.rm = TRUE), .groups = "drop") |>
+  slice_max(trips, n = 10)
+
+rail_bus_mix <- USAGE |>
+  filter(year(month) == 2024) |>
+  mutate(category = if_else(Mode %in% c("Heavy Rail", "Commuter Rail", "Light Rail", "Streetcar"), "Rail", "Non-rail")) |>
+  group_by(metro_area, category) |>
+  summarize(trips = sum(UPT, na.rm = TRUE), .groups = "drop") |>
+  group_by(metro_area) |>
+  mutate(total_trips = sum(trips), rail_share = if_else(category == "Rail", trips / total_trips, NA_real_)) |>
+  ungroup() |>
+  filter(total_trips >= 10000000, category == "Rail") |>
+  slice_max(rail_share, n = 10)
+
+service_intensity <- USAGE |>
+  filter(year(month) == 2024) |>
+  group_by(Agency, Mode) |>
+  summarize(UPT = sum(UPT, na.rm = TRUE), VRM = sum(VRM, na.rm = TRUE), .groups = "drop") |>
+  filter(VRM > 0, UPT >= 1000000) |>
+  mutate(trips_per_vrm = UPT / VRM) |>
+  slice_max(trips_per_vrm, n = 10)
+
+top_metros_latest |>
+  ggplot(aes(x = reorder(metro_area, trips), y = trips)) +
+  geom_col(fill = "#2c7fb8") +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Largest Transit Markets in the Latest Available Month",
+    x = NULL,
+    y = "Unlinked passenger trips",
+    caption = paste("Latest month:", format(latest_month, "%B %Y"))
+  ) +
+  theme_minimal()
+```
+
+```{r extra-fact-tables}
+cat("### Fact 1: The largest transit markets dominate national ridership\n")
+top_metros_latest |> kable()
+
+cat("### Fact 2: Some large metros are much more rail-oriented\n")
+rail_bus_mix |> select(metro_area, total_trips, rail_share) |> kable(digits = 3)
+
+cat("### Fact 3: Trips per vehicle mile identify intensively used service\n")
+service_intensity |> kable(digits = 3)
+```
+
+# Annual 2022 Usage and Finance
+
+## Task 5: Table Summarization
+
+```{r annual-summary}
+USAGE_2022_ANNUAL <- USAGE |>
+  filter(year(month) == 2022) |>
+  group_by(`NTD ID`, Agency, metro_area, Mode) |>
+  summarize(UPT = sum(UPT, na.rm = TRUE), VRM = sum(VRM, na.rm = TRUE), .groups = "drop")
+
+USAGE_AND_FINANCIALS <- left_join(
+  USAGE_2022_ANNUAL,
+  FINANCIALS,
+  join_by(`NTD ID`, Mode)
+) |>
+  drop_na() |>
+  mutate(
+    farebox_recovery = `Total Fares` / Expenses,
+    expense_per_upt = Expenses / UPT,
+    fare_per_upt = `Total Fares` / UPT,
+    expense_per_vrm = Expenses / VRM,
+    fare_per_vrm = `Total Fares` / VRM
+  )
+
+USAGE_2022_ANNUAL |>
+  slice_max(UPT, n = 10) |>
+  kable(digits = 2)
+```
+
+## Task 6: Farebox Recovery Among Major Systems
+
+I define a major system as any agency-mode pair with at least 400,000 annual unlinked passenger trips. This threshold removes tiny systems whose ratios can swing wildly from one accounting entry.
+
+```{r farebox-comparisons}
+major_systems <- USAGE_AND_FINANCIALS |>
+  filter(UPT >= 400000, VRM > 0, Expenses > 0)
+
+summary_questions <- bind_rows(
+  major_systems |> slice_max(UPT, n = 1, with_ties = FALSE) |> mutate(metric = "Most UPT in 2022"),
+  major_systems |> slice_max(farebox_recovery, n = 1, with_ties = FALSE) |> mutate(metric = "Highest farebox recovery"),
+  major_systems |> slice_min(expense_per_upt, n = 1, with_ties = FALSE) |> mutate(metric = "Lowest expenses per UPT"),
+  major_systems |> slice_max(fare_per_upt, n = 1, with_ties = FALSE) |> mutate(metric = "Highest total fares per UPT"),
+  major_systems |> slice_min(expense_per_vrm, n = 1, with_ties = FALSE) |> mutate(metric = "Lowest expenses per VRM"),
+  major_systems |> slice_max(fare_per_vrm, n = 1, with_ties = FALSE) |> mutate(metric = "Highest total fares per VRM")
+) |>
+  select(metric, Agency, Mode, metro_area, UPT, VRM, `Total Fares`, Expenses, farebox_recovery, expense_per_upt, fare_per_upt, expense_per_vrm, fare_per_vrm)
+
+summary_questions |>
+  mutate(across(c(UPT, VRM, `Total Fares`, Expenses), comma)) |>
+  mutate(across(contains("per_"), dollar)) |>
+  mutate(farebox_recovery = percent(farebox_recovery, accuracy = 0.1)) |>
+  kable()
+```
+
+```{r efficiency-plot}
+major_systems |>
+  filter(UPT >= quantile(UPT, 0.75, na.rm = TRUE)) |>
+  ggplot(aes(x = expense_per_upt, y = farebox_recovery, size = UPT, color = Mode)) +
+  geom_point(alpha = 0.75) +
+  scale_x_continuous(labels = dollar) +
+  scale_y_continuous(labels = percent) +
+  scale_size_continuous(labels = comma) +
+  labs(
+    title = "Farebox Recovery Rewards Both Ridership and Fare Revenue",
+    subtitle = "Major 2022 agency-mode systems",
+    x = "Operating expense per unlinked passenger trip",
+    y = "Farebox recovery ratio",
+    size = "UPT",
+    color = "Mode"
+  ) +
+  theme_minimal()
+```
+
+# Conclusion
+
+The most efficient system depends on the definition of efficiency. Farebox recovery emphasizes a system's ability to pay operating costs from fares, while expenses per trip emphasizes low-cost mobility. I give the most weight to expenses per passenger trip because it directly measures how cheaply a system provides useful rides. Farebox recovery is still important, but it can reward high fares as much as good operations. The most convincing candidates are therefore the major systems that combine high ridership, low expense per trip, and a respectable farebox recovery ratio rather than winning only one category.

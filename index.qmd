@@ -8,19 +8,22 @@ This site collects my coursework and mini-projects for STA 9750
 
 ## Projects
 
-- [**Mini-Project: The Electoral College**](mp3.html) — analysis of U.S. presidential and House election data, 1976-2024.
-- [**Mini-Project: The Ultimate Playlist**](playlistmp.html) — data-driven playlist curation from song characteristics and user-generated playlists.
-- [**Individual Project: CUNY Retirement Plan Analysis**](InteractiveMonteCarlo.html) — Monte Carlo decision support for new CUNY faculty choosing between retirement plans.
+- [**Mini-Project #01: Fiscal Characteristics of Major US Public Transit Systems**](mp01.html) - farebox recovery and operating efficiency among U.S. transit systems.
+- [**Mini-Project #02: The Business of Show Business**](mp2.html) - data-driven movie development using IMDb title, rating, and personnel data.
+- [**Mini-Project: The Electoral College**](mp3.html) - analysis of U.S. presidential and House election data, 1976-2024.
+- [**Mini-Project #04: Exploring Recent US Political Shifts**](mp04.html) - county-level 2020-2024 presidential election shifts from Wikipedia and Census shapefiles.
+- [**Mini-Project: The Ultimate Playlist**](playlistmp.html) - data-driven playlist curation from song characteristics and user-generated playlists.
+- [**Individual Project: CUNY Retirement Plan Analysis**](InteractiveMonteCarlo.html) - Monte Carlo decision support for new CUNY faculty choosing between retirement plans.
 
 ```{r}
 #| echo: false
 #| message: false
 #| warning: false
 
-if(!require("leaflet")){
-    options(repos=c(CRAN="https://cloud.r-project.org"))
-    install.packages("leaflet")
-    stopifnot(require("leaflet"))
+if (!require("leaflet")) {
+  options(repos = c(CRAN = "https://cloud.r-project.org"))
+  install.packages("leaflet")
+  stopifnot(require("leaflet"))
 }
 
 baruch_longitude <- -73.98333
@@ -28,9 +31,12 @@ baruch_latitude  <- +40.74028
 
 leaflet() |>
   addTiles() |>
-  setView(baruch_longitude, baruch_latitude, zoom=17) |>
-  addPopups(baruch_longitude, baruch_latitude,
-            "I am a Master's student at <b>Baruch College</b>!")
+  setView(baruch_longitude, baruch_latitude, zoom = 17) |>
+  addPopups(
+    baruch_longitude,
+    baruch_latitude,
+    "I am a Master's student at <b>Baruch College</b>!"
+  )
 ```
 
 ---

@@ -3,6 +3,12 @@ project:
   output-dir: docs
   render:
     - index.qmd
+    - mp01.qmd
+    - mp2.qmd
+    - mp3.qmd
+    - mp04.qmd
+    - playlistmp.qmd
+    - InteractiveMonteCarlo.qmd
 
 website:
   title: "STA 9750 Submission Material"
@@ -15,8 +21,14 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: mp01.html
+        text: "Transit Finance"
+      - href: mp2.html
+        text: "Show Business"
       - href: mp3.html
         text: "Electoral College"
+      - href: mp04.html
+        text: "Political Shifts"
       - href: playlistmp.html
         text: "Playlist"
       - href: InteractiveMonteCarlo.html

@@ -1,0 +1,459 @@
+---
+title: "STA 9750 Mini-Project #02: The Business of Show Business"
+author: "Yashvi Mittal"
+date: "2025-10-23"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show code"
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+  cache: true
+---
+
+# Introduction
+
+Hollywood development is a portfolio problem: find a concept with broad appeal, attach credible talent, and reduce uncertainty by learning from prior successes. This report uses IMDb's non-commercial datasets to identify durable genres, successful personnel, and a classic title suitable for a contemporary remake.
+
+```{r setup}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+pkgs <- c("tidyverse", "scales", "DT", "knitr", "stringr")
+missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing_pkgs) > 0) install.packages(missing_pkgs)
+
+library(tidyverse)
+library(scales)
+library(DT)
+library(knitr)
+library(stringr)
+
+dir.create("data/mp02", recursive = TRUE, showWarnings = FALSE)
+knitr::opts_chunk$set(cache.lazy = FALSE)
+```
+
+# Data
+
+```{r get-imdb}
+get_imdb_file <- function(fname) {
+  base_url <- "https://datasets.imdbws.com/"
+  fname_ext <- paste0(fname, ".tsv.gz")
+  dest <- file.path("data/mp02", fname_ext)
+  download_imdb <- function() {
+    tmp <- tempfile(fileext = ".tsv.gz")
+    download.file(paste0(base_url, fname_ext), destfile = tmp, mode = "wb", quiet = FALSE)
+    file.rename(tmp, dest)
+  }
+
+  if (!file.exists(dest)) {
+    download_imdb()
+  }
+
+  tryCatch(
+    readr::read_tsv(dest, na = "\\N", show_col_types = FALSE, progress = FALSE, lazy = FALSE),
+    error = function(e) {
+      unlink(dest)
+      download_imdb()
+      readr::read_tsv(dest, na = "\\N", show_col_types = FALSE, progress = FALSE, lazy = FALSE)
+    }
+  )
+}
+
+NAME_BASICS <- get_imdb_file("name.basics")
+TITLE_BASICS <- get_imdb_file("title.basics")
+TITLE_EPISODES <- get_imdb_file("title.episode")
+TITLE_RATINGS <- get_imdb_file("title.ratings")
+TITLE_CREW <- get_imdb_file("title.crew")
+TITLE_PRINCIPALS <- get_imdb_file("title.principals")
+```
+
+# Data Sub-Sampling
+
+The first filter keeps people with at least two known-for credits. The second keeps titles with at least 100 IMDb ratings, which removes very obscure records and makes the joins more manageable.
+
+```{r subsample}
+NAME_BASICS <- NAME_BASICS |>
+  filter(str_count(knownForTitles, ",") > 1)
+
+TITLE_RATINGS <- TITLE_RATINGS |>
+  filter(numVotes >= 100)
+
+TITLE_BASICS <- TITLE_BASICS |> semi_join(TITLE_RATINGS, join_by(tconst))
+TITLE_CREW <- TITLE_CREW |> semi_join(TITLE_RATINGS, join_by(tconst))
+TITLE_EPISODES_1 <- TITLE_EPISODES |> semi_join(TITLE_RATINGS, join_by(tconst))
+TITLE_EPISODES_2 <- TITLE_EPISODES |> semi_join(TITLE_RATINGS, join_by(parentTconst == tconst))
+TITLE_EPISODES <- bind_rows(TITLE_EPISODES_1, TITLE_EPISODES_2) |> distinct()
+TITLE_PRINCIPALS <- TITLE_PRINCIPALS |> semi_join(TITLE_RATINGS, join_by(tconst))
+rm(TITLE_EPISODES_1, TITLE_EPISODES_2)
+```
+
+# Initial Exploration
+
+## Task 1: Column Type Correction
+
+```{r type-correction}
+NAME_BASICS <- NAME_BASICS |>
+  mutate(birthYear = as.numeric(birthYear), deathYear = as.numeric(deathYear))
+
+TITLE_BASICS <- TITLE_BASICS |>
+  mutate(
+    isAdult = as.logical(as.integer(isAdult)),
+    startYear = as.numeric(startYear),
+    endYear = as.numeric(endYear),
+    runtimeMinutes = as.numeric(runtimeMinutes)
+  )
+
+TITLE_EPISODES <- TITLE_EPISODES |>
+  mutate(seasonNumber = as.numeric(seasonNumber), episodeNumber = as.numeric(episodeNumber))
+
+TITLE_RATINGS <- TITLE_RATINGS |>
+  mutate(averageRating = as.numeric(averageRating), numVotes = as.numeric(numVotes))
+
+TITLE_PRINCIPALS <- TITLE_PRINCIPALS |>
+  mutate(ordering = as.numeric(ordering))
+```
+
+```{r glimpse-tables}
+list(
+  NAME_BASICS = NAME_BASICS,
+  TITLE_BASICS = TITLE_BASICS,
+  TITLE_EPISODES = TITLE_EPISODES,
+  TITLE_RATINGS = TITLE_RATINGS,
+  TITLE_CREW = TITLE_CREW,
+  TITLE_PRINCIPALS = TITLE_PRINCIPALS
+) |>
+  imap(function(tbl, nm) {
+    cat("\n\n### ", nm, "\n\n", sep = "")
+    print(glimpse(tbl))
+  })
+```
+
+## Task 2: Instructor-Provided Questions
+
+```{r task-2}
+title_counts <- TITLE_BASICS |>
+  filter(titleType %in% c("movie", "tvSeries", "tvEpisode")) |>
+  count(titleType, name = "n") |>
+  arrange(desc(n))
+
+oldest_living <- NAME_BASICS |>
+  filter(!is.na(birthYear), is.na(deathYear)) |>
+  arrange(birthYear) |>
+  slice_head(n = 10) |>
+  select(primaryName, birthYear, primaryProfession, knownForTitles)
+
+perfect_episode <- TITLE_BASICS |>
+  inner_join(TITLE_RATINGS, join_by(tconst)) |>
+  filter(titleType == "tvEpisode", averageRating == 10, numVotes >= 200000) |>
+  left_join(TITLE_EPISODES, join_by(tconst)) |>
+  left_join(
+    TITLE_BASICS |> select(parentTconst = tconst, seriesTitle = primaryTitle, seriesStart = startYear),
+    join_by(parentTconst)
+  ) |>
+  select(primaryTitle, seriesTitle, seasonNumber, episodeNumber, averageRating, numVotes)
+
+mark_hamill_known_for <- NAME_BASICS |>
+  filter(primaryName == "Mark Hamill") |>
+  separate_longer_delim(knownForTitles, ",") |>
+  left_join(TITLE_BASICS, join_by(knownForTitles == tconst)) |>
+  select(primaryName, primaryTitle, titleType, startYear, genres)
+
+best_series_12_plus <- TITLE_EPISODES |>
+  inner_join(TITLE_RATINGS, join_by(tconst)) |>
+  group_by(parentTconst) |>
+  summarize(
+    episodes = n(),
+    avg_episode_rating = weighted.mean(averageRating, numVotes, na.rm = TRUE),
+    total_votes = sum(numVotes, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  filter(episodes > 12) |>
+  inner_join(TITLE_BASICS, join_by(parentTconst == tconst)) |>
+  arrange(desc(avg_episode_rating), desc(total_votes)) |>
+  select(primaryTitle, startYear, episodes, avg_episode_rating, total_votes) |>
+  slice_head(n = 10)
+
+happy_days <- TITLE_BASICS |>
+  filter(primaryTitle == "Happy Days", titleType == "tvSeries", startYear == 1974) |>
+  slice_head(n = 1)
+
+happy_days_by_season <- TITLE_EPISODES |>
+  filter(parentTconst == happy_days$tconst[1]) |>
+  inner_join(TITLE_RATINGS, join_by(tconst)) |>
+  group_by(seasonNumber) |>
+  summarize(
+    episodes = n(),
+    average_rating = weighted.mean(averageRating, numVotes, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  filter(!is.na(seasonNumber))
+
+title_counts |> kable()
+oldest_living |> kable()
+perfect_episode |> kable()
+mark_hamill_known_for |> kable()
+best_series_12_plus |> kable(digits = 2)
+```
+
+```{r happy-days-plot}
+happy_days_by_season |>
+  ggplot(aes(x = seasonNumber, y = average_rating)) +
+  geom_line(color = "#2c7fb8", linewidth = 1) +
+  geom_point(color = "#2c7fb8", size = 2) +
+  scale_x_continuous(breaks = sort(unique(happy_days_by_season$seasonNumber))) +
+  labs(
+    title = "Happy Days Ratings by Season",
+    subtitle = "Weighted by episode vote count",
+    x = "Season",
+    y = "Average IMDb rating"
+  ) +
+  theme_minimal()
+```
+
+The season trend provides the empirical version of the "jump the shark" claim. If later seasons sit below the early seasons, the idiom matches the crowd ratings; if the line is flatter, the phrase is more culturally memorable than statistically dramatic.
+
+# Quantifying Success
+
+## Task 3: Custom Success Metric
+
+I define success as a blend of quality and audience reach:
+
+`success_score = averageRating * log10(numVotes + 1)`
+
+This keeps the rating scale meaningful while preventing vote count alone from dominating.
+
+```{r success-metric}
+TITLE_RATINGS <- TITLE_RATINGS |>
+  mutate(success_score = averageRating * log10(numVotes + 1))
+
+movie_success <- TITLE_BASICS |>
+  filter(titleType == "movie", !is.na(startYear), !isAdult) |>
+  inner_join(TITLE_RATINGS, join_by(tconst)) |>
+  mutate(decade = floor(startYear / 10) * 10)
+
+top_success_movies <- movie_success |>
+  slice_max(success_score, n = 10) |>
+  select(primaryTitle, startYear, genres, averageRating, numVotes, success_score)
+
+popular_low_quality <- movie_success |>
+  filter(numVotes >= quantile(numVotes, 0.99, na.rm = TRUE)) |>
+  slice_min(success_score, n = 5) |>
+  select(primaryTitle, startYear, genres, averageRating, numVotes, success_score)
+
+prestige_person <- "Christopher Nolan"
+prestige_projects <- NAME_BASICS |>
+  filter(primaryName == prestige_person) |>
+  separate_longer_delim(knownForTitles, ",") |>
+  left_join(movie_success, join_by(knownForTitles == tconst)) |>
+  arrange(desc(success_score)) |>
+  select(primaryName, primaryTitle, startYear, genres, averageRating, numVotes, success_score)
+
+recent_solid_check <- movie_success |>
+  filter(startYear >= 2010, numVotes >= 100000) |>
+  summarize(
+    median_success = median(success_score, na.rm = TRUE),
+    p75_success = quantile(success_score, 0.75, na.rm = TRUE),
+    p90_success = quantile(success_score, 0.90, na.rm = TRUE)
+  )
+
+success_threshold <- quantile(movie_success$success_score, 0.90, na.rm = TRUE)
+```
+
+```{r success-validation-tables}
+top_success_movies |> kable(digits = 2)
+popular_low_quality |> kable(digits = 2)
+prestige_projects |> kable(digits = 2)
+recent_solid_check |> kable(digits = 2)
+```
+
+I use the 90th percentile of movie success scores, `r round(success_threshold, 2)`, as the threshold for a clear success. It is intentionally demanding: the films above this line should be at least solid by both audience reach and viewer evaluation.
+
+# Examining Success by Genre and Decade
+
+## Task 4: Trends in Success Over Time
+
+```{r genre-trends}
+genre_decade <- movie_success |>
+  filter(!is.na(genres), genres != "\\N", startYear >= 1960) |>
+  separate_longer_delim(genres, ",") |>
+  mutate(success = success_score >= success_threshold) |>
+  group_by(decade, genres) |>
+  summarize(
+    titles = n(),
+    successes = sum(success, na.rm = TRUE),
+    success_rate = successes / titles,
+    .groups = "drop"
+  ) |>
+  filter(titles >= 20)
+
+top_genre_each_decade <- genre_decade |>
+  group_by(decade) |>
+  slice_max(successes, n = 1, with_ties = FALSE) |>
+  ungroup()
+
+post_2010_genres <- genre_decade |>
+  filter(decade >= 2010) |>
+  group_by(genres) |>
+  summarize(
+    titles = sum(titles),
+    successes = sum(successes),
+    success_rate = successes / titles,
+    .groups = "drop"
+  ) |>
+  arrange(desc(successes))
+
+selected_genre <- post_2010_genres |>
+  filter(titles >= 100) |>
+  slice_max(success_rate, n = 1, with_ties = FALSE) |>
+  pull(genres)
+```
+
+```{r genre-plots}
+top_genre_each_decade |>
+  ggplot(aes(x = decade, y = successes, fill = genres)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = genres), vjust = -0.2, size = 3) +
+  labs(title = "Most Successful Genre by Decade", x = "Decade", y = "Number of successful movies") +
+  theme_minimal()
+
+post_2010_genres |>
+  slice_max(successes, n = 12) |>
+  ggplot(aes(x = reorder(genres, successes), y = successes, fill = success_rate)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_viridis_c(labels = percent) +
+  labs(
+    title = "Post-2010 Genre Success",
+    subtitle = "Counts and rates can tell different stories",
+    x = NULL,
+    y = "Successful movies",
+    fill = "Success rate"
+  ) +
+  theme_minimal()
+```
+
+I select `r selected_genre` as the target genre. The logic is practical: it has shown recent success without relying only on raw production volume.
+
+# Successful Personnel in the Genre
+
+## Task 5: Key Personnel
+
+```{r personnel}
+principals_with_names <- TITLE_PRINCIPALS |>
+  filter(category %in% c("actor", "actress", "director")) |>
+  inner_join(NAME_BASICS, join_by(nconst)) |>
+  inner_join(movie_success |> select(tconst, primaryTitle, startYear, genres, success_score, averageRating, numVotes), join_by(tconst))
+
+actor_candidates <- principals_with_names |>
+  filter(category %in% c("actor", "actress"), str_detect(genres, fixed(selected_genre))) |>
+  group_by(nconst, primaryName) |>
+  summarize(
+    genre_projects = n_distinct(tconst),
+    genre_successes = n_distinct(tconst[success_score >= success_threshold]),
+    best_success = max(success_score, na.rm = TRUE),
+    known_for = first(knownForTitles),
+    .groups = "drop"
+  ) |>
+  filter(genre_projects >= 2, genre_successes >= 1) |>
+  arrange(desc(genre_successes), desc(best_success)) |>
+  slice_head(n = 10)
+
+director_candidates <- TITLE_CREW |>
+  separate_longer_delim(directors, ",") |>
+  rename(nconst = directors) |>
+  inner_join(NAME_BASICS, join_by(nconst)) |>
+  inner_join(movie_success |> filter(str_detect(genres, fixed(selected_genre))), join_by(tconst)) |>
+  group_by(nconst, primaryName) |>
+  summarize(
+    genre_projects = n_distinct(tconst),
+    genre_successes = n_distinct(tconst[success_score >= success_threshold]),
+    best_success = max(success_score, na.rm = TRUE),
+    known_for = first(knownForTitles),
+    .groups = "drop"
+  ) |>
+  filter(genre_projects >= 1, genre_successes >= 1) |>
+  arrange(desc(genre_successes), desc(best_success)) |>
+  slice_head(n = 10)
+
+target_actors <- actor_candidates |> slice_head(n = 2)
+target_director <- director_candidates |> slice_head(n = 1)
+
+actor_candidates |> kable(digits = 2)
+director_candidates |> kable(digits = 2)
+```
+
+```{r personnel-plot}
+bind_rows(
+  actor_candidates |> mutate(role = "Actor"),
+  director_candidates |> mutate(role = "Director")
+) |>
+  slice_max(best_success, n = 12) |>
+  ggplot(aes(x = reorder(primaryName, best_success), y = best_success, fill = role)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = paste("Potential Talent for a", selected_genre, "Project"),
+    x = NULL,
+    y = "Best success score",
+    fill = "Role"
+  ) +
+  theme_minimal()
+```
+
+The recommended package is `r paste(target_actors$primaryName, collapse = " and ")` with `r target_director$primaryName` directing. They give the pitch three useful signals: prior genre credibility, at least one major success, and recognizable known-for projects that make marketing easier.
+
+# Nostalgia and Remakes
+
+## Task 6: Finding a Classic Movie to Remake
+
+```{r remake}
+recent_titles <- movie_success |>
+  filter(startYear >= max(startYear, na.rm = TRUE) - 25) |>
+  select(recent_title = primaryTitle)
+
+classic_candidates <- movie_success |>
+  filter(
+    str_detect(genres, fixed(selected_genre)),
+    startYear <= 1999,
+    numVotes >= quantile(numVotes, 0.90, na.rm = TRUE),
+    averageRating >= 7.0
+  ) |>
+  anti_join(recent_titles, join_by(primaryTitle == recent_title)) |>
+  arrange(desc(success_score)) |>
+  slice_head(n = 10)
+
+classic_choice <- classic_candidates |> slice_head(n = 1)
+
+classic_personnel <- bind_rows(
+  TITLE_CREW |>
+    filter(tconst == classic_choice$tconst[1]) |>
+    separate_longer_delim(directors, ",") |>
+    transmute(nconst = directors, original_role = "director"),
+  TITLE_CREW |>
+    filter(tconst == classic_choice$tconst[1]) |>
+    separate_longer_delim(writers, ",") |>
+    transmute(nconst = writers, original_role = "writer"),
+  TITLE_PRINCIPALS |>
+    filter(tconst == classic_choice$tconst[1], category %in% c("actor", "actress")) |>
+    transmute(nconst, original_role = category)
+) |>
+  distinct() |>
+  left_join(NAME_BASICS, join_by(nconst)) |>
+  mutate(alive = is.na(deathYear)) |>
+  select(primaryName, original_role, birthYear, deathYear, alive, primaryProfession)
+
+classic_candidates |> select(primaryTitle, startYear, genres, averageRating, numVotes, success_score) |> kable(digits = 2)
+classic_personnel |> kable()
+```
+
+# Task 7: Elevator Pitch
+
+Our next film should be a contemporary `r selected_genre` remake of `r classic_choice$primaryTitle[1]`. The original has the two things a studio wants from inherited intellectual property: deep audience recognition and enough age to make a new interpretation feel like revival rather than repetition. The data supports the choice because it clears the success threshold, has a large rating base, and belongs to a genre that has remained commercially viable in the post-2010 market.
+
+The creative package should be built around `r paste(target_actors$primaryName, collapse = " and ")`, directed by `r target_director$primaryName`. This combination gives the studio a recognizable marquee pairing and a director with demonstrated genre credibility. The campaign should sell the film as a prestige entertainment event rather than a disposable reboot: familiar title, modern stakes, and talent with proven IMDb success.
+
+Before rights negotiations, legal should review the living original personnel listed above. If any original actors, writers, or directors are available, a carefully chosen cameo or consulting credit could add fan-service value without letting nostalgia crowd out the new film. The pitch is simple: use a proven story, attach credible genre talent, and market the project as the rare remake with both an audience and a reason to exist.
