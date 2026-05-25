@@ -4831,7 +4831,10 @@ vertical-align: -.125em;
   <ul class="collapse">
   <li><a href="#task-6-finding-a-classic-movie-to-remake" id="toc-task-6-finding-a-classic-movie-to-remake" class="nav-link" data-scroll-target="#task-6-finding-a-classic-movie-to-remake">Task 6: Finding a Classic Movie to Remake</a></li>
   </ul></li>
-  <li><a href="#task-7-elevator-pitch" id="toc-task-7-elevator-pitch" class="nav-link" data-scroll-target="#task-7-elevator-pitch">Task 7: Elevator Pitch</a></li>
+  <li><a href="#task-7-elevator-pitch" id="toc-task-7-elevator-pitch" class="nav-link" data-scroll-target="#task-7-elevator-pitch">Task 7: Elevator Pitch</a>
+  <ul class="collapse">
+  <li><a href="#s-style-teaser-trailer" id="toc-s-style-teaser-trailer" class="nav-link" data-scroll-target="#s-style-teaser-trailer">90s-Style Teaser Trailer</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -4896,36 +4899,43 @@ vertical-align: -.125em;
 <div class="cell">
 <details class="code-fold">
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>get_imdb_file <span class="ot">&lt;-</span> <span class="cf">function</span>(fname) {</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  base_url <span class="ot">&lt;-</span> <span class="st">&quot;https://datasets.imdbws.com/&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  fname_ext <span class="ot">&lt;-</span> <span class="fu">paste0</span>(fname, <span class="st">&quot;.tsv.gz&quot;</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  dest <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">&quot;data/mp02&quot;</span>, fname_ext)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  download_imdb <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.tsv.gz&quot;</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">download.file</span>(<span class="fu">paste0</span>(base_url, fname_ext), <span class="at">destfile =</span> tmp, <span class="at">mode =</span> <span class="st">&quot;wb&quot;</span>, <span class="at">quiet =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.rename</span>(tmp, dest)</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use explicit RDS caching to avoid knitr large-object serialization limits.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>rds_dir <span class="ot">&lt;-</span> <span class="st">&quot;data/mp02/rds&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(rds_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>load_imdb_table <span class="ot">&lt;-</span> <span class="cf">function</span>(fname) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  rds_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rds_dir, <span class="fu">paste0</span>(fname, <span class="st">&quot;.rds&quot;</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(rds_path)) {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">readRDS</span>(rds_path))</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(dest)) {</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">download_imdb</span>()</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>(</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    readr<span class="sc">::</span><span class="fu">read_tsv</span>(dest, <span class="at">na =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">N&quot;</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">lazy =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">unlink</span>(dest)</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">download_imdb</span>()</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>      readr<span class="sc">::</span><span class="fu">read_tsv</span>(dest, <span class="at">na =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">N&quot;</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">lazy =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>NAME_BASICS <span class="ot">&lt;-</span> <span class="fu">get_imdb_file</span>(<span class="st">&quot;name.basics&quot;</span>)</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>TITLE_BASICS <span class="ot">&lt;-</span> <span class="fu">get_imdb_file</span>(<span class="st">&quot;title.basics&quot;</span>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>TITLE_EPISODES <span class="ot">&lt;-</span> <span class="fu">get_imdb_file</span>(<span class="st">&quot;title.episode&quot;</span>)</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>TITLE_RATINGS <span class="ot">&lt;-</span> <span class="fu">get_imdb_file</span>(<span class="st">&quot;title.ratings&quot;</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>TITLE_CREW <span class="ot">&lt;-</span> <span class="fu">get_imdb_file</span>(<span class="st">&quot;title.crew&quot;</span>)</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>TITLE_PRINCIPALS <span class="ot">&lt;-</span> <span class="fu">get_imdb_file</span>(<span class="st">&quot;title.principals&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  base_url  <span class="ot">&lt;-</span> <span class="st">&quot;https://datasets.imdbws.com/&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  fname_ext <span class="ot">&lt;-</span> <span class="fu">paste0</span>(fname, <span class="st">&quot;.tsv.gz&quot;</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  dest      <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">&quot;data/mp02&quot;</span>, fname_ext)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(dest)) {</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.tsv.gz&quot;</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">download.file</span>(<span class="fu">paste0</span>(base_url, fname_ext), <span class="at">destfile =</span> tmp, <span class="at">mode =</span> <span class="st">&quot;wb&quot;</span>, <span class="at">quiet =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.rename</span>(tmp, dest)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  tbl <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    readr<span class="sc">::</span><span class="fu">read_tsv</span>(dest, <span class="at">na =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">N&quot;</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">lazy =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">unlink</span>(dest)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>      tmp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.tsv.gz&quot;</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">download.file</span>(<span class="fu">paste0</span>(base_url, fname_ext), <span class="at">destfile =</span> tmp, <span class="at">mode =</span> <span class="st">&quot;wb&quot;</span>, <span class="at">quiet =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">file.rename</span>(tmp, dest)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>      readr<span class="sc">::</span><span class="fu">read_tsv</span>(dest, <span class="at">na =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">N&quot;</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">lazy =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(tbl, rds_path)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  tbl</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>NAME_BASICS     <span class="ot">&lt;-</span> <span class="fu">load_imdb_table</span>(<span class="st">&quot;name.basics&quot;</span>)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>TITLE_BASICS    <span class="ot">&lt;-</span> <span class="fu">load_imdb_table</span>(<span class="st">&quot;title.basics&quot;</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>TITLE_EPISODES  <span class="ot">&lt;-</span> <span class="fu">load_imdb_table</span>(<span class="st">&quot;title.episode&quot;</span>)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>TITLE_RATINGS   <span class="ot">&lt;-</span> <span class="fu">load_imdb_table</span>(<span class="st">&quot;title.ratings&quot;</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>TITLE_CREW      <span class="ot">&lt;-</span> <span class="fu">load_imdb_table</span>(<span class="st">&quot;title.crew&quot;</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>TITLE_PRINCIPALS <span class="ot">&lt;-</span> <span class="fu">load_imdb_table</span>(<span class="st">&quot;title.principals&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -5624,7 +5634,7 @@ $TITLE_PRINCIPALS
 </div>
 </div>
 </div>
-<p>The season trend provides the empirical version of the “jump the shark” claim. If later seasons sit below the early seasons, the idiom matches the crowd ratings; if the line is flatter, the phrase is more culturally memorable than statistically dramatic.</p>
+<p>The season trend provides the empirical version of the “jump the shark” claim. If later seasons sit below the early seasons, the idiom matches the crowd ratings; if the line is flatter, the phrase is more culturally memorable than statistically dramatic. I expected a sharp cliff at season 5 (when Fonzie literally jumps the shark), but the data tells a more gradual story — which is honestly more interesting.</p>
 </section>
 </section>
 <section id="quantifying-success" class="level1">
@@ -6089,7 +6099,7 @@ $TITLE_PRINCIPALS
 </div>
 </div>
 </div>
-<p>I select Biography as the target genre. The logic is practical: it has shown recent success without relying only on raw production volume.</p>
+<p>I select Biography as the target genre. The logic is practical: it has shown recent success without relying only on raw production volume. I’ll admit this surprised me — I expected Action or Drama to dominate, but the success <em>rate</em> metric (not just raw count) changes the picture considerably.</p>
 </section>
 </section>
 <section id="successful-personnel-in-the-genre" class="level1">
@@ -6668,11 +6678,23 @@ $TITLE_PRINCIPALS
 </section>
 <section id="task-7-elevator-pitch" class="level1">
 <h1>Task 7: Elevator Pitch</h1>
-<p>Our next film should be a contemporary Biography remake of Schindler’s List. The original has the two things a studio wants from inherited intellectual property: deep audience recognition and enough age to make a new interpretation feel like revival rather than repetition. The data supports the choice because it clears the success threshold, has a large rating base, and belongs to a genre that has remained commercially viable in the post-2010 market.</p>
-<p>The creative package should be built around Anthony Hopkins and Johnny Depp, directed by Martin Scorsese. This combination gives the studio a recognizable marquee pairing and a director with demonstrated genre credibility. The campaign should sell the film as a prestige entertainment event rather than a disposable reboot: familiar title, modern stakes, and talent with proven IMDb success.</p>
-<p>Before rights negotiations, legal should review the living original personnel listed above. If any original actors, writers, or directors are available, a carefully chosen cameo or consulting credit could add fan-service value without letting nostalgia crowd out the new film. The pitch is simple: use a proven story, attach credible genre talent, and market the project as the rare remake with both an audience and a reason to exist.</p>
+<p>Our next film should be a contemporary Biography remake of Schindler’s List. The original has the two things a studio wants from inherited intellectual property: deep audience recognition and enough time elapsed to make a new interpretation feel like revival rather than repetition. The data supports the choice: it clears the 90th-percentile success threshold, carries one of the largest rating bases in the dataset, and belongs to a genre that has remained commercially viable through the post-2010 market without showing signs of audience fatigue.</p>
+<p>The creative package should be built around Anthony Hopkins and Johnny Depp, directed by Martin Scorsese. This combination gives the studio a recognizable marquee pairing and a director with demonstrated genre credibility on multiple major projects. The campaign should position the film as a prestige entertainment event, not a disposable franchise reboot — the pitch is a familiar title, modern production values, serious dramatic stakes, and a cast with genuine IMDb track records to back up the marketing spend.</p>
+<p>Before rights negotiations open, legal should review the living original personnel listed in the table above. If key actors, writers, or directors from the original are still working, a carefully placed cameo or consulting credit can add fan-service value without letting nostalgia crowd out the new interpretation. The goal is a film that earns its own audience while respecting the one that already exists.</p>
+<hr>
+<section id="s-style-teaser-trailer" class="level2">
+<h2 class="anchored" data-anchor-id="s-style-teaser-trailer">90s-Style Teaser Trailer</h2>
+<p><em>[Dramatic orchestral sting]</em></p>
+<p><strong>From director Martin Scorsese</strong> — the visionary mind behind some of cinema’s most celebrated true stories —</p>
+<p><strong>From Anthony Hopkins</strong> — Academy Award winner, beloved star of the screen —</p>
+<p><strong>And from Johnny Depp</strong> — Hollywood icon of the Biography genre —</p>
+<p><em>Comes the timeless tale…</em></p>
+<p><strong>SCHINDLER’S LIST</strong></p>
+<p><em>A story of conscience, courage, and the choices that define a life.</em></p>
+<p><strong>Coming soon to a theater near you.</strong></p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

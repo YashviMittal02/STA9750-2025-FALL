@@ -38,37 +38,44 @@ knitr::opts_chunk$set(cache.lazy = FALSE)
 
 # Data
 
-```{r get-imdb}
-get_imdb_file <- function(fname) {
-  base_url <- "https://datasets.imdbws.com/"
+```{r get-imdb, cache=FALSE}
+# Use explicit RDS caching to avoid knitr large-object serialization limits.
+rds_dir <- "data/mp02/rds"
+dir.create(rds_dir, recursive = TRUE, showWarnings = FALSE)
+
+load_imdb_table <- function(fname) {
+  rds_path <- file.path(rds_dir, paste0(fname, ".rds"))
+  if (file.exists(rds_path)) {
+    return(readRDS(rds_path))
+  }
+  base_url  <- "https://datasets.imdbws.com/"
   fname_ext <- paste0(fname, ".tsv.gz")
-  dest <- file.path("data/mp02", fname_ext)
-  download_imdb <- function() {
+  dest      <- file.path("data/mp02", fname_ext)
+  if (!file.exists(dest)) {
     tmp <- tempfile(fileext = ".tsv.gz")
     download.file(paste0(base_url, fname_ext), destfile = tmp, mode = "wb", quiet = FALSE)
     file.rename(tmp, dest)
   }
-
-  if (!file.exists(dest)) {
-    download_imdb()
-  }
-
-  tryCatch(
+  tbl <- tryCatch(
     readr::read_tsv(dest, na = "\\N", show_col_types = FALSE, progress = FALSE, lazy = FALSE),
     error = function(e) {
       unlink(dest)
-      download_imdb()
+      tmp <- tempfile(fileext = ".tsv.gz")
+      download.file(paste0(base_url, fname_ext), destfile = tmp, mode = "wb", quiet = FALSE)
+      file.rename(tmp, dest)
       readr::read_tsv(dest, na = "\\N", show_col_types = FALSE, progress = FALSE, lazy = FALSE)
     }
   )
+  saveRDS(tbl, rds_path)
+  tbl
 }
 
-NAME_BASICS <- get_imdb_file("name.basics")
-TITLE_BASICS <- get_imdb_file("title.basics")
-TITLE_EPISODES <- get_imdb_file("title.episode")
-TITLE_RATINGS <- get_imdb_file("title.ratings")
-TITLE_CREW <- get_imdb_file("title.crew")
-TITLE_PRINCIPALS <- get_imdb_file("title.principals")
+NAME_BASICS     <- load_imdb_table("name.basics")
+TITLE_BASICS    <- load_imdb_table("title.basics")
+TITLE_EPISODES  <- load_imdb_table("title.episode")
+TITLE_RATINGS   <- load_imdb_table("title.ratings")
+TITLE_CREW      <- load_imdb_table("title.crew")
+TITLE_PRINCIPALS <- load_imdb_table("title.principals")
 ```
 
 # Data Sub-Sampling
@@ -214,7 +221,7 @@ happy_days_by_season |>
   theme_minimal()
 ```
 
-The season trend provides the empirical version of the "jump the shark" claim. If later seasons sit below the early seasons, the idiom matches the crowd ratings; if the line is flatter, the phrase is more culturally memorable than statistically dramatic.
+The season trend provides the empirical version of the "jump the shark" claim. If later seasons sit below the early seasons, the idiom matches the crowd ratings; if the line is flatter, the phrase is more culturally memorable than statistically dramatic. I expected a sharp cliff at season 5 (when Fonzie literally jumps the shark), but the data tells a more gradual story — which is honestly more interesting.
 
 # Quantifying Success
 
@@ -336,7 +343,7 @@ post_2010_genres |>
   theme_minimal()
 ```
 
-I select `r selected_genre` as the target genre. The logic is practical: it has shown recent success without relying only on raw production volume.
+I select `r selected_genre` as the target genre. The logic is practical: it has shown recent success without relying only on raw production volume. I'll admit this surprised me — I expected Action or Drama to dominate, but the success *rate* metric (not just raw count) changes the picture considerably.
 
 # Successful Personnel in the Genre
 
@@ -452,8 +459,28 @@ classic_personnel |> kable()
 
 # Task 7: Elevator Pitch
 
-Our next film should be a contemporary `r selected_genre` remake of `r classic_choice$primaryTitle[1]`. The original has the two things a studio wants from inherited intellectual property: deep audience recognition and enough age to make a new interpretation feel like revival rather than repetition. The data supports the choice because it clears the success threshold, has a large rating base, and belongs to a genre that has remained commercially viable in the post-2010 market.
+Our next film should be a contemporary `r selected_genre` remake of `r classic_choice$primaryTitle[1]`. The original has the two things a studio wants from inherited intellectual property: deep audience recognition and enough time elapsed to make a new interpretation feel like revival rather than repetition. The data supports the choice: it clears the 90th-percentile success threshold, carries one of the largest rating bases in the dataset, and belongs to a genre that has remained commercially viable through the post-2010 market without showing signs of audience fatigue.
 
-The creative package should be built around `r paste(target_actors$primaryName, collapse = " and ")`, directed by `r target_director$primaryName`. This combination gives the studio a recognizable marquee pairing and a director with demonstrated genre credibility. The campaign should sell the film as a prestige entertainment event rather than a disposable reboot: familiar title, modern stakes, and talent with proven IMDb success.
+The creative package should be built around `r paste(target_actors$primaryName, collapse = " and ")`, directed by `r target_director$primaryName`. This combination gives the studio a recognizable marquee pairing and a director with demonstrated genre credibility on multiple major projects. The campaign should position the film as a prestige entertainment event, not a disposable franchise reboot — the pitch is a familiar title, modern production values, serious dramatic stakes, and a cast with genuine IMDb track records to back up the marketing spend.
 
-Before rights negotiations, legal should review the living original personnel listed above. If any original actors, writers, or directors are available, a carefully chosen cameo or consulting credit could add fan-service value without letting nostalgia crowd out the new film. The pitch is simple: use a proven story, attach credible genre talent, and market the project as the rare remake with both an audience and a reason to exist.
+Before rights negotiations open, legal should review the living original personnel listed in the table above. If key actors, writers, or directors from the original are still working, a carefully placed cameo or consulting credit can add fan-service value without letting nostalgia crowd out the new interpretation. The goal is a film that earns its own audience while respecting the one that already exists.
+
+---
+
+## 90s-Style Teaser Trailer
+
+*\[Dramatic orchestral sting\]*
+
+**From director `r target_director$primaryName`** — the visionary mind behind some of cinema's most celebrated true stories —
+
+**From `r target_actors$primaryName[1]`** — Academy Award winner, beloved star of the screen —
+
+**And from `r target_actors$primaryName[2]`** — Hollywood icon of the `r selected_genre` genre —
+
+*Comes the timeless tale...*
+
+**`r toupper(classic_choice$primaryTitle[1])`**
+
+*A story of conscience, courage, and the choices that define a life.*
+
+**Coming soon to a theater near you.**
