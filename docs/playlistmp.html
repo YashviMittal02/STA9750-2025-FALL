@@ -9,7 +9,7 @@
 <meta name="author" content="Yashvi Mittal">
 <meta name="dcterms.date" content="2025-12-20">
 
-<title>Mini-Project #03: Creating the Ultimate Playlist</title>
+<title>Mini-Project #03: Creating the Ultimate Playlist – STA 9750 Submission Material</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -59,50 +59,135 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="playlistmp_files/libs/clipboard/clipboard.min.js"></script>
-<script src="playlistmp_files/libs/quarto-html/quarto.js"></script>
-<script src="playlistmp_files/libs/quarto-html/popper.min.js"></script>
-<script src="playlistmp_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="playlistmp_files/libs/quarto-html/anchor.min.js"></script>
-<link href="playlistmp_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="playlistmp_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="playlistmp_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="playlistmp_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="playlistmp_files/libs/bootstrap/bootstrap-32162a2fca7cb0439643f2faaab1edf3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-<link href="playlistmp_files/libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-fad5ab29a14bbe0a7a7d29177f3f13bb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
 
-<script src="playlistmp_files/libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
 
-<link href="playlistmp_files/libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
+<link href="site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
 
-<script src="playlistmp_files/libs/datatables-binding-0.34.0/datatables.js"></script>
+<script src="site_libs/datatables-binding-0.34.0/datatables.js"></script>
 
-<script src="playlistmp_files/libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 
-<link href="playlistmp_files/libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+<link href="site_libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
 
-<link href="playlistmp_files/libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
+<link href="site_libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
 
-<script src="playlistmp_files/libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="site_libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
 
-<link href="playlistmp_files/libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+<link href="site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
 
-<script src="playlistmp_files/libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<script src="site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
 
-<link href="playlistmp_files/libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
 
-<script src="playlistmp_files/libs/pagedtable-1.1/js/pagedtable.js"></script>
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
 
 
 
 </head>
 
-<body>
+<body class="nav-fixed">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-  <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Table of contents</h2>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">STA 9750 Submission Material</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mp01.html"> 
+<span class="menu-text">Transit Finance</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mp2.html"> 
+<span class="menu-text">Show Business</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mp3.html"> 
+<span class="menu-text">Electoral College</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mp04.html"> 
+<span class="menu-text">Political Shifts</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./playlistmp.html" aria-current="page"> 
+<span class="menu-text">Playlist</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./InteractiveMonteCarlo.html"> 
+<span class="menu-text">Monte Carlo</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
@@ -131,7 +216,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   </ul>
 </nav>
-</div>
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -216,8 +302,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datatable</span>(<span class="at">options =</span> <span class="fu">list</span>(<span class="at">scrollX =</span> <span class="cn">TRUE</span>), <span class="at">caption =</span> <span class="st">"Preview of Cleaned Song Data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-c8ade79ef9af93a44acf" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-c8ade79ef9af93a44acf">{"x":{"filter":"none","vertical":false,"caption":"<caption>Preview of Cleaned Song Data<\/caption>","data":[["1","2","3","4","5","6"],["6KbQ3uYMLKb5jDxLF7wYDD","6KuQTIu1KoTTkLXKrwlLPV","6KuQTIu1KoTTkLXKrwlLPV","6L63VW0PibdM1HDSBoqnoM","6M94FkXd15sOAOQYRnWPN8","6N6tiFZ9vLTSOIxkj8qKrd"],["Singende Bataillone 1. Teil","Fantasiestücke, Op. 111: Più tosto lento","Fantasiestücke, Op. 111: Più tosto lento","Chapter 1.18 - Zamek kaniowski","Bebamos Juntos - Instrumental (Remasterizado)","Polonaise-Fantaisie in A-Flat Major, Op. 61"],[158648,282133,282133,104300,180760,687733],["1928","1928","1928","1928","9/25/28","1928"],[1928,1928,1928,1928,1928,1928],[0.995,0.994,0.994,0.604,0.995,0.99],[0.708,0.379,0.379,0.749,0.781,0.21],[0.195,0.0135,0.0135,0.22,0.13,0.204],[0.5629999999999999,0.901,0.901,0,0.887,0.908],[0.151,0.07630000000000001,0.07630000000000001,0.119,0.111,0.098],[-12.428,-28.454,-28.454,-19.924,-14.734,-16.829],[0.0506,0.0462,0.0462,0.929,0.0926,0.0424],[118.469,83.97199999999999,83.97199999999999,107.177,108.003,62.149],[0.779,0.0767,0.0767,0.88,0.72,0.0693],[1,1,1,0,0,1],[10,8,8,5,1,11],[0,0,0,0,0,1],[0,0,0,0,0,0],["Carl Woitschach","Robert Schumann","Vladimir Horowitz","Seweryn Goszczyński","Francisco Canaro","Frédéric Chopin"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>id<\/th>\n      <th>name<\/th>\n      <th>duration_ms<\/th>\n      <th>release_date<\/th>\n      <th>year<\/th>\n      <th>acousticness<\/th>\n      <th>danceability<\/th>\n      <th>energy<\/th>\n      <th>instrumentalness<\/th>\n      <th>liveness<\/th>\n      <th>loudness<\/th>\n      <th>speechiness<\/th>\n      <th>tempo<\/th>\n      <th>valence<\/th>\n      <th>mode<\/th>\n      <th>key<\/th>\n      <th>popularity<\/th>\n      <th>explicit<\/th>\n      <th>artist<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[3,5,6,7,8,9,10,11,12,13,14,15,16,17,18]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"id","targets":1},{"name":"name","targets":2},{"name":"duration_ms","targets":3},{"name":"release_date","targets":4},{"name":"year","targets":5},{"name":"acousticness","targets":6},{"name":"danceability","targets":7},{"name":"energy","targets":8},{"name":"instrumentalness","targets":9},{"name":"liveness","targets":10},{"name":"loudness","targets":11},{"name":"speechiness","targets":12},{"name":"tempo","targets":13},{"name":"valence","targets":14},{"name":"mode","targets":15},{"name":"key","targets":16},{"name":"popularity","targets":17},{"name":"explicit","targets":18},{"name":"artist","targets":19}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-670011846ef020a1eded" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-670011846ef020a1eded">{"x":{"filter":"none","vertical":false,"caption":"<caption>Preview of Cleaned Song Data<\/caption>","data":[["1","2","3","4","5","6"],["6KbQ3uYMLKb5jDxLF7wYDD","6KuQTIu1KoTTkLXKrwlLPV","6KuQTIu1KoTTkLXKrwlLPV","6L63VW0PibdM1HDSBoqnoM","6M94FkXd15sOAOQYRnWPN8","6N6tiFZ9vLTSOIxkj8qKrd"],["Singende Bataillone 1. Teil","Fantasiestücke, Op. 111: Più tosto lento","Fantasiestücke, Op. 111: Più tosto lento","Chapter 1.18 - Zamek kaniowski","Bebamos Juntos - Instrumental (Remasterizado)","Polonaise-Fantaisie in A-Flat Major, Op. 61"],[158648,282133,282133,104300,180760,687733],["1928","1928","1928","1928","9/25/28","1928"],[1928,1928,1928,1928,1928,1928],[0.995,0.994,0.994,0.604,0.995,0.99],[0.708,0.379,0.379,0.749,0.781,0.21],[0.195,0.0135,0.0135,0.22,0.13,0.204],[0.5629999999999999,0.901,0.901,0,0.887,0.908],[0.151,0.07630000000000001,0.07630000000000001,0.119,0.111,0.098],[-12.428,-28.454,-28.454,-19.924,-14.734,-16.829],[0.0506,0.0462,0.0462,0.929,0.0926,0.0424],[118.469,83.97199999999999,83.97199999999999,107.177,108.003,62.149],[0.779,0.0767,0.0767,0.88,0.72,0.0693],[1,1,1,0,0,1],[10,8,8,5,1,11],[0,0,0,0,0,1],[0,0,0,0,0,0],["Carl Woitschach","Robert Schumann","Vladimir Horowitz","Seweryn Goszczyński","Francisco Canaro","Frédéric Chopin"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>id<\/th>\n      <th>name<\/th>\n      <th>duration_ms<\/th>\n      <th>release_date<\/th>\n      <th>year<\/th>\n      <th>acousticness<\/th>\n      <th>danceability<\/th>\n      <th>energy<\/th>\n      <th>instrumentalness<\/th>\n      <th>liveness<\/th>\n      <th>loudness<\/th>\n      <th>speechiness<\/th>\n      <th>tempo<\/th>\n      <th>valence<\/th>\n      <th>mode<\/th>\n      <th>key<\/th>\n      <th>popularity<\/th>\n      <th>explicit<\/th>\n      <th>artist<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[3,5,6,7,8,9,10,11,12,13,14,15,16,17,18]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"id","targets":1},{"name":"name","targets":2},{"name":"duration_ms","targets":3},{"name":"release_date","targets":4},{"name":"year","targets":5},{"name":"acousticness","targets":6},{"name":"danceability","targets":7},{"name":"energy","targets":8},{"name":"instrumentalness","targets":9},{"name":"liveness","targets":10},{"name":"loudness","targets":11},{"name":"speechiness","targets":12},{"name":"tempo","targets":13},{"name":"valence","targets":14},{"name":"mode","targets":15},{"name":"key","targets":16},{"name":"popularity","targets":17},{"name":"explicit","targets":18},{"name":"artist","targets":19}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 </section>
@@ -333,8 +419,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datatable</span>(<span class="at">caption =</span> <span class="st">"Rectangled Playlist Data (showing Position)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-304dc9c1d02e1c20ad78" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-304dc9c1d02e1c20ad78">{"x":{"filter":"none","vertical":false,"caption":"<caption>Rectangled Playlist Data (showing Position)<\/caption>","data":[["1","2","3","4","5","6"],["Throwbacks","Throwbacks","Throwbacks","Throwbacks","Throwbacks","Throwbacks"],[1,2,3,4,5,6],["Lose Control (feat. Ciara &amp; Fat Man Scoop)","Toxic","Crazy In Love","Rock Your Body","It Wasn't Me","Yeah!"],[226863,198800,235933,267266,227600,250373]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>playlist_name<\/th>\n      <th>playlist_position<\/th>\n      <th>track_name<\/th>\n      <th>duration_ms<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[2,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"playlist_name","targets":1},{"name":"playlist_position","targets":2},{"name":"track_name","targets":3},{"name":"duration_ms","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-7efea9bc35b5edffc208" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-7efea9bc35b5edffc208">{"x":{"filter":"none","vertical":false,"caption":"<caption>Rectangled Playlist Data (showing Position)<\/caption>","data":[["1","2","3","4","5","6"],["Throwbacks","Throwbacks","Throwbacks","Throwbacks","Throwbacks","Throwbacks"],[1,2,3,4,5,6],["Lose Control (feat. Ciara &amp; Fat Man Scoop)","Toxic","Crazy In Love","Rock Your Body","It Wasn't Me","Yeah!"],[226863,198800,235933,267266,227600,250373]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>playlist_name<\/th>\n      <th>playlist_position<\/th>\n      <th>track_name<\/th>\n      <th>duration_ms<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[2,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"playlist_name","targets":1},{"name":"playlist_position","targets":2},{"name":"track_name","targets":3},{"name":"duration_ms","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 </section>
@@ -363,8 +449,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datatable</span>(<span class="at">options =</span> <span class="fu">list</span>(<span class="at">dom =</span> <span class="st">'t'</span>), <span class="at">caption =</span> <span class="st">"Top 5 Most Frequent Tracks"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-a2712be53f460614c6dd" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-a2712be53f460614c6dd">{"x":{"filter":"none","vertical":false,"caption":"<caption>Top 5 Most Frequent Tracks<\/caption>","data":[["1","2","3","4","5"],["One Dance","HUMBLE.","Broccoli (feat. Lil Yachty)","Congratulations","Bad and Boujee (feat. Lil Uzi Vert)"],["Drake","Kendrick Lamar","DRAM","Post Malone","Migos"],[98,96,87,86,84]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>track_name<\/th>\n      <th>artist_name<\/th>\n      <th>n<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":3},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"track_name","targets":1},{"name":"artist_name","targets":2},{"name":"n","targets":3}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-af383d2a7675048ecd35" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-af383d2a7675048ecd35">{"x":{"filter":"none","vertical":false,"caption":"<caption>Top 5 Most Frequent Tracks<\/caption>","data":[["1","2","3","4","5"],["One Dance","HUMBLE.","Broccoli (feat. Lil Yachty)","Congratulations","Bad and Boujee (feat. Lil Uzi Vert)"],["Drake","Kendrick Lamar","DRAM","Post Malone","Migos"],[98,96,87,86,84]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>track_name<\/th>\n      <th>artist_name<\/th>\n      <th>n<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":3},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"track_name","targets":1},{"name":"artist_name","targets":2},{"name":"n","targets":3}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <p><strong>3. What is the most popular track in the playlist data absent from song characteristics?</strong></p>
@@ -836,15 +922,16 @@ FALSE  TRUE
 <span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-892c449e19856a27a325" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-892c449e19856a27a325">{"x":{"filter":"none","vertical":false,"caption":"<caption>The Ultimate Playlist: Neon Midnight Drive<\/caption>","data":[["Midnight City","Blue Skies","Party Up (Up In Here)","Move On","Rose","When I Close My Eyes","I Try","Numb - Bonus Track","Changes","Worthy","I'll Be","Mi Gente"],["M83","Marty Murray","DMX","Bernadette Peters","A Perfect Circle","Kenny Chesney","Mary J. Blige","B.o.B","Langhorne Slim","Jhené Aiko","JAY-Z","J Balvin"],[2011,1927,2001,1984,2000,2000,2004,2014,2015,2015,1996,2017],[73,0,45,28,47,37,40,57,57,56,55,72],[105.009,108.075,100.801,90.616,119.831,90.67100000000001,96.73999999999999,96.032,110.21,95.051,105.986,104.959],[11,11,11,11,11,11,11,11,11,11,11,11]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>name<\/th>\n      <th>artist<\/th>\n      <th>year<\/th>\n      <th>popularity<\/th>\n      <th>tempo<\/th>\n      <th>key<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","paging":false,"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[2,3,4,5]},{"name":"name","targets":0},{"name":"artist","targets":1},{"name":"year","targets":2},{"name":"popularity","targets":3},{"name":"tempo","targets":4},{"name":"key","targets":5}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-5a0c960b62ad1cb6d985" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-5a0c960b62ad1cb6d985">{"x":{"filter":"none","vertical":false,"caption":"<caption>The Ultimate Playlist: Neon Midnight Drive<\/caption>","data":[["Midnight City","Blue Skies","Party Up (Up In Here)","Move On","Rose","When I Close My Eyes","I Try","Numb - Bonus Track","Changes","Worthy","I'll Be","Mi Gente"],["M83","Marty Murray","DMX","Bernadette Peters","A Perfect Circle","Kenny Chesney","Mary J. Blige","B.o.B","Langhorne Slim","Jhené Aiko","JAY-Z","J Balvin"],[2011,1927,2001,1984,2000,2000,2004,2014,2015,2015,1996,2017],[73,0,45,28,47,37,40,57,57,56,55,72],[105.009,108.075,100.801,90.616,119.831,90.67100000000001,96.73999999999999,96.032,110.21,95.051,105.986,104.959],[11,11,11,11,11,11,11,11,11,11,11,11]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>name<\/th>\n      <th>artist<\/th>\n      <th>year<\/th>\n      <th>popularity<\/th>\n      <th>tempo<\/th>\n      <th>key<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","paging":false,"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[2,3,4,5]},{"name":"name","targets":0},{"name":"artist","targets":1},{"name":"year","targets":2},{"name":"popularity","targets":3},{"name":"tempo","targets":4},{"name":"key","targets":5}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
+
+
 </section>
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
@@ -935,7 +1022,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
     var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
     var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp('/' + window.location.host + '/');
+      var filterRegex = new RegExp("https:\/\/YashviMittal02\.github\.io\/STA9750-2025-FALL\/");
     var isInternal = (href) => {
         return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
     }
