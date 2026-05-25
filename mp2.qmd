@@ -8,12 +8,23 @@ format:
     code-summary: "Show code"
     toc: true
     toc-depth: 3
+    toc-location: left
     embed-resources: true
     theme: cosmo
+    fig-width: 9
+    fig-height: 5.5
+    fig-dpi: 110
+    fig-align: center
+    df-print: paged
 execute:
   warning: false
   message: false
   cache: true
+knitr:
+  opts_chunk:
+    dev: png
+    dpi: 110
+    cache.lazy: false
 ---
 
 # Introduction
@@ -125,18 +136,22 @@ TITLE_PRINCIPALS <- TITLE_PRINCIPALS |>
 ```
 
 ```{r glimpse-tables}
-list(
-  NAME_BASICS = NAME_BASICS,
-  TITLE_BASICS = TITLE_BASICS,
-  TITLE_EPISODES = TITLE_EPISODES,
-  TITLE_RATINGS = TITLE_RATINGS,
-  TITLE_CREW = TITLE_CREW,
-  TITLE_PRINCIPALS = TITLE_PRINCIPALS
+tibble(
+  Table = c("NAME_BASICS", "TITLE_BASICS", "TITLE_EPISODES", "TITLE_RATINGS", "TITLE_CREW", "TITLE_PRINCIPALS"),
+  Rows = c(nrow(NAME_BASICS), nrow(TITLE_BASICS), nrow(TITLE_EPISODES), nrow(TITLE_RATINGS), nrow(TITLE_CREW), nrow(TITLE_PRINCIPALS)),
+  Columns = c(ncol(NAME_BASICS), ncol(TITLE_BASICS), ncol(TITLE_EPISODES), ncol(TITLE_RATINGS), ncol(TITLE_CREW), ncol(TITLE_PRINCIPALS)),
+  Key_Fields = c(
+    "nconst, primaryName, birthYear, primaryProfession, knownForTitles",
+    "tconst, titleType, primaryTitle, startYear, genres, runtimeMinutes",
+    "tconst, parentTconst, seasonNumber, episodeNumber",
+    "tconst, averageRating, numVotes",
+    "tconst, directors, writers",
+    "tconst, ordering, nconst, category, job, characters"
+  )
 ) |>
-  imap(function(tbl, nm) {
-    cat("\n\n### ", nm, "\n\n", sep = "")
-    print(glimpse(tbl))
-  })
+  mutate(Rows = comma(Rows)) |>
+  kable(col.names = c("Table", "Rows (after sub-sample)", "Columns", "Key Fields"),
+        caption = "IMDb dataset dimensions after filtering to 100+ vote titles and multi-credit people")
 ```
 
 ## Task 2: Instructor-Provided Questions
@@ -199,26 +214,47 @@ happy_days_by_season <- TITLE_EPISODES |>
   ) |>
   filter(!is.na(seasonNumber))
 
-title_counts |> kable()
-oldest_living |> kable()
-perfect_episode |> kable()
-mark_hamill_known_for |> kable()
-best_series_12_plus |> kable(digits = 2)
+title_counts |>
+  mutate(n = comma(n)) |>
+  kable(col.names = c("Title Type", "Count"), caption = "Titles in IMDb by type")
+
+oldest_living |>
+  kable(caption = "Oldest living people in IMDb (approximate — death year missing)")
+
+perfect_episode |>
+  mutate(numVotes = comma(numVotes)) |>
+  kable(caption = "TV episodes with 10.0 average rating and 200k+ votes")
+
+mark_hamill_known_for |>
+  kable(caption = "Mark Hamill — known-for titles in IMDb")
+
+best_series_12_plus |>
+  mutate(total_votes = comma(total_votes), avg_episode_rating = round(avg_episode_rating, 2)) |>
+  datatable(
+    caption = "Top 10 series with 12+ episodes by weighted average episode rating",
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE
+  )
 ```
 
 ```{r happy-days-plot}
 happy_days_by_season |>
   ggplot(aes(x = seasonNumber, y = average_rating)) +
-  geom_line(color = "#2c7fb8", linewidth = 1) +
-  geom_point(color = "#2c7fb8", size = 2) +
+  geom_ribbon(aes(ymin = 5.5, ymax = average_rating), fill = "#2c7fb820") +
+  geom_line(color = "#2c7fb8", linewidth = 1.2) +
+  geom_point(color = "#2c7fb8", size = 3, shape = 21, fill = "white", stroke = 1.5) +
+  geom_text(aes(label = round(average_rating, 1)), vjust = -0.9, size = 3, color = "grey30") +
   scale_x_continuous(breaks = sort(unique(happy_days_by_season$seasonNumber))) +
+  scale_y_continuous(limits = c(5.5, 8.5)) +
   labs(
-    title = "Happy Days Ratings by Season",
-    subtitle = "Weighted by episode vote count",
+    title = "Happy Days IMDb Ratings by Season",
+    subtitle = "Weighted average by episode vote count — does the shark really tank the ratings?",
     x = "Season",
-    y = "Average IMDb rating"
+    y = "Weighted average IMDb rating",
+    caption = "Season 5 (1977–78): Fonzie jumps the shark"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
 ```
 
 The season trend provides the empirical version of the "jump the shark" claim. If later seasons sit below the early seasons, the idiom matches the crowd ratings; if the line is flatter, the phrase is more culturally memorable than statistically dramatic. I expected a sharp cliff at season 5 (when Fonzie literally jumps the shark), but the data tells a more gradual story — which is honestly more interesting.
@@ -271,10 +307,24 @@ success_threshold <- quantile(movie_success$success_score, 0.90, na.rm = TRUE)
 ```
 
 ```{r success-validation-tables}
-top_success_movies |> kable(digits = 2)
-popular_low_quality |> kable(digits = 2)
-prestige_projects |> kable(digits = 2)
-recent_solid_check |> kable(digits = 2)
+top_success_movies |>
+  mutate(numVotes = comma(numVotes), success_score = round(success_score, 2)) |>
+  datatable(
+    caption = "Top 10 movies by success score",
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE
+  )
+
+popular_low_quality |>
+  mutate(numVotes = comma(numVotes), success_score = round(success_score, 2)) |>
+  kable(digits = 2, caption = "Most-voted movies with lowest success score (popular but poorly rated)")
+
+prestige_projects |>
+  mutate(numVotes = comma(numVotes), success_score = round(success_score, 2)) |>
+  kable(digits = 2, caption = "Christopher Nolan's filmography ranked by success score")
+
+recent_solid_check |>
+  kable(digits = 2, caption = "Success score benchmarks for 2010+ movies with 100k+ votes")
 ```
 
 I use the 90th percentile of movie success scores, `r round(success_threshold, 2)`, as the threshold for a clear success. It is intentionally demanding: the films above this line should be at least solid by both audience reach and viewer evaluation.
@@ -322,25 +372,34 @@ selected_genre <- post_2010_genres |>
 ```{r genre-plots}
 top_genre_each_decade |>
   ggplot(aes(x = decade, y = successes, fill = genres)) +
-  geom_col(show.legend = FALSE) +
-  geom_text(aes(label = genres), vjust = -0.2, size = 3) +
-  labs(title = "Most Successful Genre by Decade", x = "Decade", y = "Number of successful movies") +
-  theme_minimal()
+  geom_col(show.legend = FALSE, width = 8, color = "white") +
+  geom_text(aes(label = genres), vjust = -0.35, size = 3.2, fontface = "bold") +
+  scale_x_continuous(breaks = seq(1960, 2020, 10)) +
+  labs(
+    title = "Dominant Genre by Decade — Which Category Produces the Most Successes?",
+    subtitle = "A 'success' = 90th-percentile success score (rating × log-votes)",
+    x = "Decade", y = "Number of successful movies"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
 
 post_2010_genres |>
-  slice_max(successes, n = 12) |>
+  slice_max(successes, n = 14) |>
   ggplot(aes(x = reorder(genres, successes), y = successes, fill = success_rate)) +
   geom_col() +
-  coord_flip() +
-  scale_fill_viridis_c(labels = percent) +
+  geom_text(aes(label = comma(successes)), hjust = -0.15, size = 3) +
+  coord_flip(clip = "off") +
+  scale_fill_viridis_c(labels = percent, option = "plasma", direction = -1) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
   labs(
-    title = "Post-2010 Genre Success",
-    subtitle = "Counts and rates can tell different stories",
+    title = "Post-2010 Genre Success: Volume vs. Hit Rate",
+    subtitle = "Bar length = total successes; color = fraction of titles that were hits",
     x = NULL,
-    y = "Successful movies",
-    fill = "Success rate"
+    y = "Successful movies (2010–present)",
+    fill = "Hit rate"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.y = element_blank())
 ```
 
 I select `r selected_genre` as the target genre. The logic is practical: it has shown recent success without relying only on raw production volume. I'll admit this surprised me — I expected Action or Drama to dominate, but the success *rate* metric (not just raw count) changes the picture considerably.
@@ -389,26 +448,44 @@ director_candidates <- TITLE_CREW |>
 target_actors <- actor_candidates |> slice_head(n = 2)
 target_director <- director_candidates |> slice_head(n = 1)
 
-actor_candidates |> kable(digits = 2)
-director_candidates |> kable(digits = 2)
+actor_candidates |>
+  mutate(best_success = round(best_success, 2)) |>
+  datatable(
+    caption = paste("Actor/actress candidates for a", selected_genre, "project"),
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE
+  )
+
+director_candidates |>
+  mutate(best_success = round(best_success, 2)) |>
+  datatable(
+    caption = paste("Director candidates for a", selected_genre, "project"),
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE
+  )
 ```
 
 ```{r personnel-plot}
 bind_rows(
-  actor_candidates |> mutate(role = "Actor"),
+  actor_candidates |> mutate(role = "Actor / Actress"),
   director_candidates |> mutate(role = "Director")
 ) |>
-  slice_max(best_success, n = 12) |>
+  slice_max(best_success, n = 14) |>
   ggplot(aes(x = reorder(primaryName, best_success), y = best_success, fill = role)) +
-  geom_col() +
-  coord_flip() +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = round(best_success, 1)), hjust = -0.15, size = 3) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(values = c("Actor / Actress" = "#2c7fb8", "Director" = "#e67e22")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
   labs(
-    title = paste("Potential Talent for a", selected_genre, "Project"),
+    title = paste("Recommended Talent Package for a", selected_genre, "Project"),
+    subtitle = "Score = averageRating × log10(numVotes + 1); higher = more prestigious",
     x = NULL,
-    y = "Best success score",
+    y = "Peak success score",
     fill = "Role"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.y = element_blank(), legend.position = "top")
 ```
 
 The recommended package is `r paste(target_actors$primaryName, collapse = " and ")` with `r target_director$primaryName` directing. They give the pitch three useful signals: prior genre credibility, at least one major success, and recognizable known-for projects that make marketing easier.
@@ -453,8 +530,18 @@ classic_personnel <- bind_rows(
   mutate(alive = is.na(deathYear)) |>
   select(primaryName, original_role, birthYear, deathYear, alive, primaryProfession)
 
-classic_candidates |> select(primaryTitle, startYear, genres, averageRating, numVotes, success_score) |> kable(digits = 2)
-classic_personnel |> kable()
+classic_candidates |>
+  select(primaryTitle, startYear, genres, averageRating, numVotes, success_score) |>
+  mutate(numVotes = comma(numVotes), success_score = round(success_score, 2)) |>
+  datatable(
+    caption = paste("Classic", selected_genre, "films from before 2000 that were not recently remade — ranked by success score"),
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE,
+    colnames = c("Title", "Year", "Genres", "Rating", "Votes", "Success Score")
+  )
+
+classic_personnel |>
+  kable(caption = "Key personnel from the original film — living members are potential collaborators")
 ```
 
 # Task 7: Elevator Pitch

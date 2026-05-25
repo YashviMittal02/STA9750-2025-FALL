@@ -8,12 +8,22 @@ format:
     code-summary: "Show code"
     toc: true
     toc-depth: 3
+    toc-location: left
     embed-resources: true
     theme: cosmo
+    fig-width: 9
+    fig-height: 5.5
+    fig-dpi: 110
+    fig-align: center
+    df-print: paged
 execute:
   warning: false
   message: false
   cache: true
+knitr:
+  opts_chunk:
+    dev: png
+    dpi: 110
 ---
 
 # Introduction
@@ -226,6 +236,35 @@ bind_rows(
 
 The first two answers describe the scale of service production. The NYC subway questions show the pandemic interruption: the April 2020 collapse is a structural shock, not a normal year-over-year fluctuation. I was genuinely surprised by how dominant a single mode and a single agency are — before running this I expected more spread across cities.
 
+To put the NYC pandemic shock in context, the chart below traces NYC subway monthly ridership from 2018 to the most recent month in the data:
+
+```{r nyc-subway-timeline}
+nyc_subway_timeline <- USAGE |>
+  filter(
+    str_detect(Agency, regex("Metropolitan Transportation Authority|MTA New York City Transit", ignore_case = TRUE)),
+    Mode == "Heavy Rail",
+    year(month) >= 2018
+  ) |>
+  group_by(month) |>
+  summarize(trips = sum(UPT, na.rm = TRUE), .groups = "drop")
+
+nyc_subway_timeline |>
+  ggplot(aes(x = month, y = trips)) +
+  geom_line(color = "#2c3e50", linewidth = 0.9) +
+  geom_point(color = "#e74c3c", size = 0.8) +
+  geom_vline(xintercept = as.numeric(ymd("2020-03-01")), linetype = "dashed", color = "grey40") +
+  annotate("text", x = ymd("2020-04-01"), y = max(nyc_subway_timeline$trips) * 0.85,
+           label = "COVID-19\nshutdown", color = "grey20", hjust = 0, size = 3.2) +
+  scale_y_continuous(labels = comma) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  labs(
+    title = "NYC Subway Monthly Ridership, 2018-Present",
+    subtitle = "The pandemic dip is large enough that no normal recession compares",
+    x = NULL, y = "Unlinked passenger trips"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
 ## Task 4: Three Additional Transit Facts
 
 ```{r extra-facts}
@@ -258,27 +297,63 @@ service_intensity <- USAGE |>
 
 top_metros_latest |>
   ggplot(aes(x = reorder(metro_area, trips), y = trips)) +
-  geom_col(fill = "#2c7fb8") +
-  coord_flip() +
-  scale_y_continuous(labels = comma) +
+  geom_col(fill = "#2c7fb8", width = 0.75) +
+  geom_text(aes(label = comma(trips, accuracy = 1)), hjust = -0.1, size = 3, color = "grey30") +
+  coord_flip(clip = "off") +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.18))) +
   labs(
     title = "Largest Transit Markets in the Latest Available Month",
+    subtitle = paste("Data through", format(latest_month, "%B %Y")),
     x = NULL,
-    y = "Unlinked passenger trips",
-    caption = paste("Latest month:", format(latest_month, "%B %Y"))
+    y = "Unlinked passenger trips"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank())
 ```
 
-```{r extra-fact-tables}
-cat("### Fact 1: The largest transit markets dominate national ridership\n")
-top_metros_latest |> kable()
+### Fact 1: The largest transit markets dominate national ridership
 
-cat("### Fact 2: Some large metros are much more rail-oriented\n")
-rail_bus_mix |> select(metro_area, total_trips, rail_share) |> kable(digits = 3)
+```{r fact-table-1}
+top_metros_latest |>
+  mutate(trips = comma(trips)) |>
+  datatable(
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE,
+    colnames = c("Metro Area", "Unlinked Passenger Trips")
+  )
+```
 
-cat("### Fact 3: Trips per vehicle mile identify intensively used service\n")
-service_intensity |> kable(digits = 3)
+### Fact 2: Some large metros are much more rail-oriented
+
+```{r fact-table-2}
+rail_bus_mix |>
+  select(metro_area, total_trips, rail_share) |>
+  mutate(
+    total_trips = comma(total_trips),
+    rail_share = percent(rail_share, accuracy = 0.1)
+  ) |>
+  datatable(
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE,
+    colnames = c("Metro Area", "Total Trips (2024)", "Rail Share")
+  )
+```
+
+### Fact 3: Trips per vehicle mile identify intensively used service
+
+```{r fact-table-3}
+service_intensity |>
+  select(Agency, Mode, UPT, VRM, trips_per_vrm) |>
+  mutate(
+    UPT = comma(UPT),
+    VRM = comma(VRM),
+    trips_per_vrm = round(trips_per_vrm, 2)
+  ) |>
+  datatable(
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE,
+    colnames = c("Agency", "Mode", "Unlinked Passenger Trips", "Vehicle Revenue Miles", "Trips per VRM")
+  )
 ```
 
 # Annual 2022 Usage and Finance
@@ -332,7 +407,11 @@ summary_questions |>
   mutate(across(c(UPT, VRM, `Total Fares`, Expenses), comma)) |>
   mutate(across(contains("per_"), dollar)) |>
   mutate(farebox_recovery = percent(farebox_recovery, accuracy = 0.1)) |>
-  kable()
+  datatable(
+    options = list(pageLength = 6, dom = "t", scrollX = TRUE),
+    rownames = FALSE,
+    caption = "Major 2022 transit systems — winner on each efficiency metric"
+  )
 ```
 
 ```{r efficiency-plot}

@@ -8,12 +8,22 @@ format:
     code-summary: "Show code"
     toc: true
     toc-depth: 3
+    toc-location: left
     embed-resources: true
     theme: cosmo
+    fig-width: 9
+    fig-height: 5.5
+    fig-dpi: 110
+    fig-align: center
+    df-print: paged
 execute:
   warning: false
   message: false
   cache: false
+knitr:
+  opts_chunk:
+    dev: png
+    dpi: 110
 ---
 
 # Introduction
@@ -22,7 +32,7 @@ This report studies county-level shifts from the 2020 to 2024 U.S. presidential 
 
 ```{r setup}
 options(repos = c(CRAN = "https://cloud.r-project.org"))
-pkgs <- c("tidyverse", "httr2", "rvest", "sf", "scales", "ggrepel", "knitr", "maps")
+pkgs <- c("tidyverse", "httr2", "rvest", "sf", "scales", "ggrepel", "knitr", "maps", "DT")
 missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_pkgs) > 0) install.packages(missing_pkgs)
 
@@ -34,6 +44,7 @@ library(scales)
 library(ggrepel)
 library(knitr)
 library(maps)
+library(DT)
 
 dir.create("data/mp04", recursive = TRUE, showWarnings = FALSE)
 theme_set(theme_minimal())
@@ -278,7 +289,14 @@ election_shift <- results_2024 |>
     voter_density_2020 = total_votes_2020 / area_sq_km
   )
 
-unmatched |> kable()
+unmatched |>
+  arrange(desc(n), source_year) |>
+  datatable(
+    caption = "Counties in Wikipedia results that could not be matched to a Census FIPS code",
+    options = list(pageLength = 10, scrollX = TRUE),
+    rownames = FALSE,
+    colnames = c("Year", "State", "Raw county name", "Cleaned name", "Count")
+  )
 ```
 
 ## Task 4: Initial Analysis Questions
@@ -312,7 +330,13 @@ answer_table <- bind_rows(
   q7 |> transmute(question = "Largest turnout increase", state, county_name, value = comma(turnout_change))
 )
 
-answer_table |> kable()
+answer_table |>
+  datatable(
+    caption = "Task 4 — county-level election data questions answered",
+    options = list(pageLength = 10, dom = "t", scrollX = TRUE),
+    rownames = FALSE,
+    colnames = c("Question", "State", "County", "Value")
+  )
 ```
 
 # Reproduce NYT County Shift Figure
@@ -352,25 +376,37 @@ centroids <- shift_shapes |>
 ```
 
 ```{r nyt-map, fig.width=11, fig.height=7}
-par(mar = c(0, 0, 3, 0))
-map("state", fill = TRUE, col = "grey96", border = "white", lwd = 0.2)
-segment_colors <- if_else(centroids$direction == "Rightward", "#d95f0e99", "#2c7fb899")
-segments(
-  centroids$x,
-  centroids$y,
-  centroids$xend,
-  centroids$yend,
-  col = segment_colors,
-  lwd = 0.5
-)
-title("County-Level Presidential Vote Shift, 2020 to 2024")
-legend(
-  "bottomleft",
-  legend = c("Rightward", "Leftward"),
-  col = c("#d95f0e", "#2c7fb8"),
-  lwd = 2,
-  bty = "n"
-)
+ggplot() +
+  geom_polygon(
+    data = state_base,
+    aes(x = long, y = lat, group = group),
+    fill = "grey95", color = "white", linewidth = 0.25
+  ) +
+  geom_segment(
+    data = centroids,
+    aes(x = x, y = y, xend = xend, yend = yend, color = direction),
+    linewidth = 0.35,
+    alpha = 0.70,
+    arrow = arrow(length = unit(0.08, "cm"), type = "closed")
+  ) +
+  scale_color_manual(
+    values = c("Rightward" = "#d95f0e", "Leftward" = "#2c7fb8"),
+    name = NULL,
+    labels = c("Rightward" = "More Republican (rightward)", "Leftward" = "More Democratic (leftward)")
+  ) +
+  coord_fixed(1.3, xlim = c(-127, -64), ylim = c(23, 50)) +
+  theme_void(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 10),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    plot.subtitle = element_text(hjust = 0.5, color = "grey40", size = 10),
+    plot.margin = margin(5, 5, 10, 5)
+  ) +
+  labs(
+    title = "County-Level Presidential Vote Shift, 2020 to 2024",
+    subtitle = "Each arrow = one county; length proportional to shift in Republican two-party vote share"
+  )
 ```
 
 # Additional Data Analysis
@@ -438,39 +474,60 @@ state_shift <- election_shift |>
 ```
 
 ```{r talking-point-figures}
+median_val <- median(election_shift$trump_share_shift, na.rm = TRUE)
+
 election_shift |>
-  ggplot(aes(x = trump_share_shift)) +
-  geom_histogram(bins = 50, fill = "#d95f0e", color = "white") +
-  geom_vline(xintercept = 0.05, linetype = "dashed") +
+  ggplot(aes(x = trump_share_shift, fill = trump_share_shift >= 0.05)) +
+  geom_histogram(bins = 60, color = "white", linewidth = 0.2) +
+  geom_vline(xintercept = 0.05, linetype = "dashed", color = "grey30") +
+  geom_vline(xintercept = 0, color = "grey50", linewidth = 0.6) +
+  annotate("text", x = 0.052, y = Inf, label = "  5-point\n  threshold", vjust = 1.4, hjust = 0, size = 3, color = "grey30") +
+  annotate("text", x = median_val - 0.002, y = Inf, label = paste0("Median: ", percent(median_val, accuracy = 0.1)),
+           vjust = 2, hjust = 1, size = 3, color = "grey30") +
   scale_x_continuous(labels = percent) +
+  scale_fill_manual(values = c(`FALSE` = "#2c7fb8", `TRUE` = "#d95f0e"), guide = "none") +
   labs(
-    title = "Most County Shifts Were Not a Five-Point Earthquake",
-    x = "Trump share shift, 2020 to 2024",
-    y = "Counties"
-  )
+    title = "Most County Shifts Were Modest, Not a Five-Point Earthquake",
+    subtitle = "Distribution of Trump two-party share change by county, 2020–2024",
+    x = "Shift in Trump two-party vote share",
+    y = "Number of counties"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
 
 shift_by_density |>
-  ggplot(aes(x = density_group, y = weighted_trump_shift)) +
-  geom_col(fill = "#2c7fb8") +
-  scale_y_continuous(labels = percent) +
+  ggplot(aes(x = factor(density_group), y = weighted_trump_shift, fill = weighted_trump_shift)) +
+  geom_col(width = 0.65) +
+  geom_text(aes(label = percent(weighted_trump_shift, accuracy = 0.1)), vjust = -0.4, size = 3.5) +
+  scale_y_continuous(labels = percent, expand = expansion(mult = c(0, 0.15))) +
+  scale_fill_gradient(low = "#abd9e9", high = "#d95f0e", guide = "none") +
   labs(
-    title = "The Vote-Weighted Shift Looks Smaller in Dense Counties",
-    x = "2020 voter-density quintile",
-    y = "Weighted Trump share shift"
-  )
+    title = "Denser Counties Shifted Less: The Vote-Weighted Map Is Quieter",
+    subtitle = "Quintile 1 = most rural; Quintile 5 = most urban by 2020 voter density",
+    x = "Voter-density quintile (1 = rural, 5 = urban)",
+    y = "Vote-weighted Trump share shift"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.x = element_blank())
 
 state_shift |>
-  slice_max(abs(trump_shift), n = 15) |>
+  slice_max(abs(trump_shift), n = 20) |>
   ggplot(aes(x = reorder(state, trump_shift), y = trump_shift, fill = trump_shift > 0)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
-  scale_y_continuous(labels = percent) +
+  geom_col(show.legend = FALSE, width = 0.7) +
+  geom_text(aes(label = percent(trump_shift, accuracy = 0.1),
+                hjust = if_else(trump_shift > 0, -0.1, 1.1)),
+            size = 3) +
+  coord_flip(clip = "off") +
+  scale_y_continuous(labels = percent, expand = expansion(mult = 0.15)) +
   scale_fill_manual(values = c(`TRUE` = "#d95f0e", `FALSE` = "#2c7fb8")) +
   labs(
-    title = "State Shifts Varied Widely",
+    title = "State-Level Shifts: Rightward Nearly Everywhere, But Not Uniformly",
+    subtitle = "Top 20 states by absolute vote-weighted shift",
     x = NULL,
-    y = "Vote-weighted Trump shift"
-  )
+    y = "Vote-weighted Trump share shift"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.y = element_blank())
 ```
 
 ```{r statistical-tests}
