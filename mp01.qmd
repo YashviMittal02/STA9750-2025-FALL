@@ -147,29 +147,35 @@ USAGE |>
   arrange(Mode) |>
   kable(col.names = "Original NTD mode codes")
 
-USAGE <- USAGE |>
-  mutate(Mode = case_when(
-    Mode == "AG" ~ "Automated Guideway",
-    Mode == "AR" ~ "Alaska Railroad",
-    Mode == "CB" ~ "Commuter Bus",
-    Mode == "CC" ~ "Cable Car",
-    Mode == "CR" ~ "Commuter Rail",
-    Mode == "DR" ~ "Demand Response",
-    Mode == "DT" ~ "Demand Response Taxi",
-    Mode == "FB" ~ "Ferryboat",
-    Mode == "HR" ~ "Heavy Rail",
-    Mode == "IP" ~ "Inclined Plane",
-    Mode == "LR" ~ "Light Rail",
-    Mode == "MB" ~ "Bus",
-    Mode == "MG" ~ "Monorail/Automated Guideway",
-    Mode == "PB" ~ "Publico",
-    Mode == "RB" ~ "Bus Rapid Transit",
-    Mode == "SR" ~ "Streetcar",
-    Mode == "TB" ~ "Trolleybus",
-    Mode == "VP" ~ "Vanpool",
-    Mode == "YR" ~ "Hybrid Rail",
-    TRUE          ~ "Unknown"
-  ))
+recode_ntd_mode <- function(x) {
+  case_when(
+    x == "AG" ~ "Automated Guideway",
+    x == "AR" ~ "Alaska Railroad",
+    x == "CB" ~ "Commuter Bus",
+    x == "CC" ~ "Cable Car",
+    x == "CR" ~ "Commuter Rail",
+    x == "DR" ~ "Demand Response",
+    x == "DT" ~ "Demand Response Taxi",
+    x == "FB" ~ "Ferryboat",
+    x == "HR" ~ "Heavy Rail",
+    x == "IP" ~ "Inclined Plane",
+    x == "LR" ~ "Light Rail",
+    x == "MB" ~ "Bus",
+    x == "MG" ~ "Monorail/Automated Guideway",
+    x == "PB" ~ "Publico",
+    x == "RB" ~ "Bus Rapid Transit",
+    x == "SR" ~ "Streetcar",
+    x == "TB" ~ "Trolleybus",
+    x == "VP" ~ "Vanpool",
+    x == "YR" ~ "Hybrid Rail",
+    TRUE      ~ "Unknown"
+  )
+}
+
+USAGE <- USAGE |> mutate(Mode = recode_ntd_mode(Mode))
+
+# Apply the same recoding to FINANCIALS so Mode joins line up downstream.
+FINANCIALS <- FINANCIALS |> mutate(Mode = recode_ntd_mode(Mode))
 ```
 
 ```{r sample-table}
